@@ -1,0 +1,10 @@
+.menu a {
+    text-decoration: none;
+
+}
+
+.menu {
+    width: 900px;
+    background-color:gray;
+    margin: auto;
+}
