@@ -4,14 +4,14 @@ export default class Component extends PureComponent {
 
     addWebSocketListener (type, action, callback) {
         if (this.webSocketListeners.length === 0) {
-            var socket = this.global.ws;
+            var socket = this.global.webSocket;
             socket.onMessage.addListener(this.onWebSocketMessage);
         }
         this.webSocketListeners.push({type, action, callback});
     }
 
     removeWebSocketListeners () {
-        var socket = this.global.ws;
+        var socket = this.global.webSocket;
         socket.onMessage.removeListener(this.onWebSocketMessage);
         this.webSocketListeners = [];
     }

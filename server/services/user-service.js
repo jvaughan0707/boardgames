@@ -1,16 +1,18 @@
 const User = require('../models/user');
 
-function validate(user, onError, onSuccess) {
-    User.findOne({ _id: user.userId}, function(err, result) {
-        if (err) {
-            onError(err); 
-        }
-        else if ((result != null &&  result.key == user.userKey)) {
-            onSuccess(result)
-        }        
-        else {
-            onSuccess(null)
-        }
+function validate(user) {
+    return new Promise((resolve, reject) => {
+        User.findOne({ _id: user.userId}, function(err, result) {
+            if (err) {
+                reject(err); 
+            }
+            else if ((result != null &&  result.key == user.userKey)) {
+                resolve(result)
+            }        
+            else {
+                resolve(null)
+            }
+        });
     });
 }
 

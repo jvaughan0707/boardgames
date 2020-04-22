@@ -10,17 +10,19 @@ class Home extends Component {
     }
 
     componentDidMount() {
-        this.global.ws.sendRequest({
-			info : {},
-			action: 'get',
-			type: 'game'
-        }).then((data) => {
-            this.setState({ games: data.info.games, gamesLoaded: true })
-        });
-        
-        this.addWebSocketListener("game", "create", this.onGameCreated.bind(this));
-
-        this.addWebSocketListener("game", "delete", this.onGameDeleted.bind(this));
+        if (this.global.webSocket) {
+            this.global.webSocket.sendRequest({
+                info : {},
+                action: 'get',
+                type: 'game'
+            }).then((data) => {
+                this.setState({ games: data.info.games, gamesLoaded: true })
+            });
+            
+            this.addWebSocketListener("game", "create", this.onGameCreated.bind(this));
+    
+            this.addWebSocketListener("game", "delete", this.onGameDeleted.bind(this));
+        }
     }
 
     componentWillUnmount() {

@@ -4,7 +4,7 @@ import Loading from '../loading/loading'
 
 const LobbyTiles = ({lobbies, gamesLoaded}) => {
 	const [ user ] = useGlobal('user');
-	const [ws] = useGlobal('ws');
+	const [webSocket] = useGlobal('webSocket');
     return ( gamesLoaded ? 
         (lobbies.length > 0 ? 
         <table>
@@ -26,7 +26,7 @@ const LobbyTiles = ({lobbies, gamesLoaded}) => {
             <td>{game.owner}</td>
             <td></td>
             <td><button type="button" onClick={() => deleteGame(game._id)}>Cancel</button></td>
-            <td><button type="button">Invite</button></td>
+            <td><button type="button"onClick={invite}>Invite</button></td>
             <td><input type="text" defaultValue={`/play/${game._id}`} /></td>
         </tr> :
         
@@ -39,7 +39,7 @@ const LobbyTiles = ({lobbies, gamesLoaded}) => {
     
     function deleteGame (id) {
         var info = { id };
-        ws.send(JSON.stringify({
+        webSocket.send(JSON.stringify({
             info,
             action: 'delete',
             type: 'game'
@@ -48,16 +48,12 @@ const LobbyTiles = ({lobbies, gamesLoaded}) => {
     function invite () {}
     function joinGame (id) {
         var info = { id, user };
-        ws.send(JSON.stringify({
+        webSocket.send(JSON.stringify({
             info,
             action: 'join',
             type: 'game'
         }))
     }
 }
-
-
-
-
     
 export default LobbyTiles
