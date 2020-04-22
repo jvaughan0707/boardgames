@@ -1,8 +1,9 @@
-import React, { PureComponent } from 'reactn';
+import React from 'reactn';
+import Component from '../component'
 import { gamesAPI } from '../api';
 import LobbyTiles from '../lobby-tiles/lobby-tiles'
 
-class Home extends PureComponent {
+class Home extends Component {
 
     constructor() {
         super();
@@ -13,22 +14,20 @@ class Home extends PureComponent {
         gamesAPI.get().then(json => {
             this.setState({ games: json, gamesLoaded: true})
         });   
+        
+        var self = this;
 
-        this.global.ws.onmessage = evt => {
-            var data = JSON.parse(evt.data)
-            if (data.type === "game") {
-                if (data.action === "create") {
-                    const game = data.info.game
-                    var games = this.state.games.concat(game);
-                    this.setState({ games })
-                }
-                else if (data.action === "delete") {
-                    const id = data.info.id
-                    var games = this.state.games.filter(g => g._id !== id);
-                    this.setState({ games })
-                }
-            }
-        }
+        this.addWebSocketListener ("game", "create", "home", function(data) {
+            const game = data.info.game
+            var games = self.state.games.concat(game);
+            self.setState({ games })
+        });
+
+        this.addWebSocketListener ("game", "delete", "home", function(data) {
+            const id = data.info.id
+            var games = self.state.games.filter(g => g._id !== id);
+            self.setState({ games })
+        });
     }
 
 	render() {

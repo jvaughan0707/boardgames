@@ -3,7 +3,7 @@ import './App.css';
 import Header from '../header/header';
 import {getUser, createUser} from '../user/user'
 import Routes from '../routes/routes';
-import { useGlobal } from 'reactn';
+import { useGlobal, getGlobal } from 'reactn';
 import Loading from '../loading/loading'
 const URL = 'ws://localhost:3030';
 
@@ -29,15 +29,22 @@ const App = () => {
   }, []);
 
   var createWebSocket = () => {
-    const	socket = new WebSocket(URL)
+    const	socket = new WebSocket(URL);
     socket.onopen = () => {
       console.log('connected');
       wsRetryCount = 0;
     }
 
     socket.onmessage = evt => {
-      const message = JSON.parse(evt.data)
-      console.log(message + ' recieved in App.js')
+      const data = JSON.parse(evt.data);
+      const wsListeners = getGlobal().wsListeners;
+      if (wsListeners) {
+        wsListeners.forEach(listener => {
+          if (data.type === listener.type && data.action === listener.action) {
+            listener.callback(data);
+          }
+        });
+      }
     }
 
     socket.onclose = () => {
