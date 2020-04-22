@@ -1,7 +1,8 @@
-import React, { PureComponent } from 'reactn';
+import React from 'reactn';
+import Component from '../component'
 import { Redirect } from 'react-router';
 
-class Create extends PureComponent {
+class Create extends Component {
 	constructor() {
         super();
         this.state = { redirect: false }

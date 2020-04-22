@@ -116,12 +116,49 @@ wss.on('connection', function connection(ws) {
   
   ws.on('message', function incoming(message) {
     var data = JSON.parse(message);
+    var info = data.info;
     switch (data.type) {
       case 'game':
-        gameService.handleSocketMessage(data.action, data.info, messageAll, messageSender)
+          switch (data.action) {
+              case 'create':
+                gameService.create(info.gameType, info.user)
+                      .then(game => messageAll({ 
+                          info: { game },
+                          action: 'create',
+                          type: 'game'}))
+                      .catch(err => messageSender(err))
+                  break;
+              case 'delete':
+                gameService.remove(info.id)
+                      .then(() => messageAll({ 
+                          info : { id: info.id },
+                          action: 'delete',
+                          type: 'game'}))
+                      .catch(err => messageSender(err))
+                      break;
+              case 'join':
+                gameService.join(info.id, info.user)
+                      .then(() => messageAll({ 
+                          info,
+                          action: 'join',
+                          type: 'game'}))
+                      .catch(err => messageSender(err))
+                      break;
+              case 'get':
+                gameService.get()
+                      .then((games) => messageSender({ 
+                          info : { games },
+                          action: 'get',
+                          type: 'game',
+                          id : data.id
+                        }))
+                      .catch(err => messageSender(err))
+                      break;
+              default:
+                  break;
+          }
         break;
       case 'user':
-        userService.handleSocketMessage(data.action, data.info, messageAll, messageSender)
         break;
       default:
         break;

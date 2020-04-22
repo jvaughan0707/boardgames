@@ -35,39 +35,11 @@ async function getPlayerStates(game) {
     game.playerStates = states;
 }
 
-function handleSocketMessage(action, info, onSuccess, onError) {
-    switch (action) {
-        case 'create':
-            create(info.gameType, info.user)
-                .then(game => onSuccess({ 
-                    info: { game },
-                    action: 'create',
-			        type: 'game'}))
-                .catch(err => onError(err))
-            break;
-        case 'delete':
-            remove(info.id)
-                .then(() => onSuccess({ 
-                    info,
-                    action: 'delete',
-                    type: 'game'}))
-                .catch(err => onError(err))
-                break;
-        case 'join':
-            join(info.id, info.user)
-                .then(() => onSuccess({ info,
-                    action: 'join',
-                    type: 'game'}))
-                .catch(err => onError(err))
-        default:
-            break;
-    }
 
-}
 
 module.exports = {
     get,
     getById,
     create,
-    handleSocketMessage
+    remove
 };

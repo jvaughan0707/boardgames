@@ -3,8 +3,11 @@ import './App.css';
 import Header from '../header/header';
 import {getUser, createUser} from '../user/user'
 import Routes from '../routes/routes';
-import { useGlobal, getGlobal } from 'reactn';
+import { useGlobal } from 'reactn';
 import Loading from '../loading/loading'
+import PreAuth from '../pre-auth/pre-auth'
+import WebSocketAsPromised from 'websocket-as-promised';
+
 const URL = 'ws://localhost:3030';
 
 const App = () => {
@@ -13,7 +16,6 @@ const App = () => {
   const [, setWs] = useGlobal('ws');
   var wsRetryCount = 0;
   const wsMaxRetries = 10;
-  var displayName = '';
 
   useEffect(() => {
     if(!userLoaded) {
@@ -29,36 +31,29 @@ const App = () => {
   }, []);
 
   var createWebSocket = () => {
-    const	socket = new WebSocket(URL);
-    socket.onopen = () => {
+    const	socket = new WebSocketAsPromised(URL, {
+      packMessage: data => JSON.stringify(data),
+      unpackMessage: data => JSON.parse(data),
+      attachRequestId: (data, requestId) => Object.assign({id: requestId}, data), 
+      extractRequestId: data => data && data.id,                               
+    });
+
+    socket.open().then(() => {
       console.log('connected');
       wsRetryCount = 0;
-    }
+    });
 
-    socket.onmessage = evt => {
-      const data = JSON.parse(evt.data);
-      const wsListeners = getGlobal().wsListeners;
-      if (wsListeners) {
-        wsListeners.forEach(listener => {
-          if (data.type === listener.type && data.action === listener.action) {
-            listener.callback(data);
-          }
-        });
-      }
-    }
-
-    socket.onclose = () => {
-      console.log('disconnected')
-      // automatically try to reconnect on connection loss
+    socket.onClose.addListener(event => {
+      console.log(`Connection closed: ${event.reason}`)
       wsRetryCount++;
       if (wsRetryCount < wsMaxRetries) {
         createWebSocket();
       }
-    }
+    });
     setWs(socket);
   }
 
-  var submit = () => {
+  var submit = (displayName) => {
     createUser(displayName)
     .then((u) => { 
       setUser(u);
@@ -66,18 +61,10 @@ const App = () => {
      });
   }
 
-  var handleChange = event => {
-    displayName =  event.target.value;
-  }
-
   return (
     !userLoaded ? <Loading /> :
       user == null ? 
-      <div className="preAuth">
-        <label>Name:</label>
-        <input type="text" onChange={handleChange} name="displayName"></input>
-        <button onClick={ submit }>Go!</button>
-      </div> :
+       <PreAuth onSubmit={submit}/>:
       <div className="App">  
           <Header />
           <Routes/>

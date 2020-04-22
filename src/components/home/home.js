@@ -1,6 +1,5 @@
 import React from 'reactn';
 import Component from '../component'
-import { gamesAPI } from '../api';
 import LobbyTiles from '../lobby-tiles/lobby-tiles'
 
 class Home extends Component {
@@ -11,23 +10,32 @@ class Home extends Component {
     }
 
     componentDidMount() {
-        gamesAPI.get().then(json => {
-            this.setState({ games: json, gamesLoaded: true})
-        });   
+        this.global.ws.sendRequest({
+			info : {},
+			action: 'get',
+			type: 'game'
+        }).then((data) => {
+            this.setState({ games: data.info.games, gamesLoaded: true })
+        });
         
-        var self = this;
+        this.addWebSocketListener("game", "create", this.onGameCreated.bind(this));
 
-        this.addWebSocketListener ("game", "create", "home", function(data) {
-            const game = data.info.game
-            var games = self.state.games.concat(game);
-            self.setState({ games })
-        });
+        this.addWebSocketListener("game", "delete", this.onGameDeleted.bind(this));
+    }
 
-        this.addWebSocketListener ("game", "delete", "home", function(data) {
-            const id = data.info.id
-            var games = self.state.games.filter(g => g._id !== id);
-            self.setState({ games })
-        });
+    componentWillUnmount() {
+        this.removeWebSocketListeners();
+    }
+
+    onGameCreated (data) {
+        const game = data.info.game
+        var games = this.state.games.concat(game);
+        this.setState({ games })
+    }
+    onGameDeleted (data) {
+        const id = data.info.id
+        var games = this.state.games.filter(g => g._id !== id);
+        this.setState({ games })
     }
 
 	render() {
