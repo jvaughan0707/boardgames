@@ -35,8 +35,6 @@ async function getPlayerStates(game) {
     game.playerStates = states;
 }
 
-
-
 module.exports = {
     get,
     getById,

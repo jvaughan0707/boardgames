@@ -1,36 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { Component } from 'reactn';
 import './App.css';
 import Header from '../header/header';
 import {getUser, createUser} from '../user/user'
 import Routes from '../routes/routes';
-import { useGlobal } from 'reactn';
 import Loading from '../loading/loading'
 import PreAuth from '../pre-auth/pre-auth'
 import WebSocketAsPromised from 'websocket-as-promised';
 
-const URL = 'ws://localhost:3030';
 
-const App = () => {
-  const [user, setUser] = useGlobal('user');
-  const [userLoaded, setUserLoaded] = useState(false);
-  const [, setWs] = useGlobal('ws');
-  var wsRetryCount = 0;
-  const wsMaxRetries = 10;
+class App extends Component {
 
-  useEffect(() => {
-    if(!userLoaded) {
-      getUser().then((u) => {
-        setUser(u);
-        setUserLoaded(true);
+  constructor() {
+    super ();
+    this.state = {userLoaded: false};
+  }
+
+  componentWillMount() {
+    if(!this.state.userLoaded) {
+      getUser().then((user) => {
+        this.setGlobal({user});
+        this.setState({userLoaded: true});
       })
       .catch((err) => {
         console.log(err);
       });
     }
-    createWebSocket();
-  }, []);
+    this.createWebSocket();
+  }
 
-  var createWebSocket = () => {
+   createWebSocket = () => {
+    const URL = 'ws://localhost:3030';
     const	socket = new WebSocketAsPromised(URL, {
       packMessage: data => JSON.stringify(data),
       unpackMessage: data => JSON.parse(data),
@@ -40,37 +39,35 @@ const App = () => {
 
     socket.open().then(() => {
       console.log('connected');
-      wsRetryCount = 0;
     });
 
     socket.onClose.addListener(event => {
       console.log(`Connection closed: ${event.reason}`)
-      wsRetryCount++;
-      if (wsRetryCount < wsMaxRetries) {
-        createWebSocket();
-      }
+        this.createWebSocket();
     });
-    setWs(socket);
+
+    this.setGlobal({ws: socket});
   }
 
-  var submit = (displayName) => {
+  submit = (displayName) => {
     createUser(displayName)
-    .then((u) => { 
-      setUser(u);
-      setUserLoaded(true);
+    .then((user) => { 
+      this.setGlobal({user});
+      this.setState({userLoaded: true});
      });
   }
 
-  return (
-    !userLoaded ? <Loading /> :
-      user == null ? 
-       <PreAuth onSubmit={submit}/>:
+  render () {
+    return (
+    !this.state.userLoaded ? <Loading /> :
+      this.global.user == null ? 
+       <PreAuth onSubmit={this.submit}/>:
       <div className="App">  
           <Header />
           <Routes/>
       </div>
-     
     );
+  }
 };
 
 export default App;
