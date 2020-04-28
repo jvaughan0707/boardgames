@@ -4,9 +4,6 @@ import './index.css';
 import App from './components/app/App';
 import registerServiceWorker from './registerServiceWorker';
 import {BrowserRouter as Router} from 'react-router-dom';
-import { setGlobal } from 'reactn';
-
-setGlobal({user: null});
 
 ReactDOM.render(
     <Router>

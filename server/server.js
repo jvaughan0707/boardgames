@@ -117,42 +117,46 @@ wss.on('connection', function connection(ws) {
   ws.on('message', function incoming(message) {
     var data = JSON.parse(message);
     var info = data.info;
+    var getResult;
     switch (data.type) {
       case 'game':
         switch (data.action) {
           case 'create':
-            gameService.create(info.gameType, info.user)
-                  .then(game => messageAll({ 
-                      info: { game },
-                      action: 'create',
-                      type: 'game'}))
-                  .catch(err => messageSender(err))
+            getResult = gameService.create(info.gameType, info.user)
+              .then(game => {
+                messageAll({ 
+                  info: { game },
+                  action: 'create',
+                  type: 'game'});
+                  
+                return null;
+              })
             break;
           case 'delete':
-            gameService.remove(info.id)
-                  .then(() => messageAll({ 
-                      info : { id: info.id },
-                      action: 'delete',
-                      type: 'game'}))
-                  .catch(err => messageSender(err))
+            getResult = gameService.remove(info.id)
+              .then(() => { 
+                messageAll({ 
+                  info : { id: info.id },
+                  action: 'delete',
+                  type: 'game'});
+                  
+                  return null;
+                });
             break;
           case 'join':
-            gameService.join(info.id, info.user)
-                  .then(() => messageAll({ 
-                      info,
-                      action: 'join',
-                      type: 'game'}))
-                  .catch(err => messageSender(err))
+            getResult = gameService.join(info.id, info.user)
+              .then(() => {
+                messageAll({ 
+                  info,
+                  action: 'join',
+                  type: 'game'});
+
+                  return null;
+                });
             break;
           case 'get':
-            gameService.get()
-                  .then((games) => messageSender({ 
-                      info : { games },
-                      action: 'get',
-                      type: 'game',
-                      id : data.id
-                    }))
-                  .catch(err => messageSender(err))
+            getResult = gameService.get()
+             .then(games => { return { games }});
             break;
           default:
             break;
@@ -161,29 +165,30 @@ wss.on('connection', function connection(ws) {
       case 'user':
         switch (data.action) {
           case 'create':
-            userService.create(info.displayName)
-                  .then(user => messageSender({ 
-                      info: { user },
-                      action: 'create',
-                      type: 'user'}))
-                  .catch(err => messageSender(err))
+            getResult = userService.create(info.displayName)
+              .then(user => { return { user }});
               break;
           case 'validate':
-            userService.validate(info.user)
-                  .then(user => messageSender({ 
-                      info : { user },
-                      action: 'validate',
-                      type: 'user',
-                      id : data.id
-                    }))
-                  .catch(err => messageSender(err))
-                  break;
+            getResult = userService.validate(info.user)
+              .then(user => { return { user }});
+              break;
           default: 
             break;
         }
         break;
       default:
         break;
+    }
+
+    if (getResult) {
+      getResult.then(result => messageSender({ 
+        success: true,
+        info : result,
+        requestId : data.requestId }))
+      .catch(err => messageSender({ 
+        success: false,
+        info : {err},
+        requestId : data.requestId }));
     }
   });
 });

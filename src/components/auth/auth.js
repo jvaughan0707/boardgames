@@ -1,5 +1,4 @@
-import React from 'react';
-import Component from '../component'
+import React, {Component } from 'reactn';
 import Cookies from 'universal-cookie';
 import Loading from '../loading/loading';
 
@@ -9,66 +8,82 @@ class Auth extends Component {
   
   constructor() {
     super ();
-    this.state = {userLoaded: false, displayName: ''};
-  }
-
-  componentDidMount() {
-    if(this.global.webSocket) {
-      this.getUser();
-    }
-  }
-
-  getUser() {
-    const ws = this.global.webSocket;
     var userId = cookies.get("userId");
-    var displayName = cookies.get('displayName');
+    var userkey = cookies.get("userKey");
+    var userLoaded = !userId;
 
     if (userId) {
-      ws.sendRequest({
-        info : {},
-        action: 'validate',
-        type: 'user'
-      })
-      .then(data => {
-        if (!data.info.user) {
-            if (displayName) {
-              this.createUser(displayName);
-            }
-        }
-        else {
-            this.setGlobal({ user: data.info.user });
-            this.setState({ userLoaded: true});
-        }
-      })
-      .catch(err => { 
-          console.log(err); 
-      })
+      if (this.global.webSocket.isOpened) {
+        this.getUser(userId, userkey);
+      }
+      else {
+        this.global.webSocket.onOpen.addListener(() => {
+          this.getUser(userId, userkey);
+        });
+      }
     }
+
+    this.state = {userLoaded, displayName: ''};
+  }
+
+  getUser(userId, userKey) {
+    var displayName = cookies.get('displayName');
+    this.global.webSocket.sendRequest({
+      info : { user : { userId, userKey } },
+      action: 'validate',
+      type: 'user'
+    })
+    .then(data => {
+      if (!data.info.user) {
+          if (displayName) {
+            this.createUser(displayName);
+          }
+          else {
+            this.setState({ userLoaded: true});
+          }
+      }
+      else {
+          this.setGlobal({ user: data.info.user });
+          this.setState({ userLoaded: true});
+      }
+    })
+    .catch(err => { 
+        console.log(err); 
+    })
   }
 
   handleChange = event => {
     this.setState({displayName: event.target.value });
   }
 
+  submit () {
+    if (this.global.webSocket.isOpened) {
+      this.createUser();
+    }
+    else {
+      this.global.webSocket.onOpen.addListener(() => {
+        this.createUser();
+      });
+    }
+  }
   createUser () {
-    const displayName = this.state.displayName;
-    const ws = this.global.webSocket;
-    ws.sendRequest({
-      info : { displayName },
-      action: 'create',
-      type: 'user'
-    })
-    .then(data=> {
-      const { _id, key } = data.info.user;
-      if (_id && key) {
-          cookies.set('displayName', displayName)
-          cookies.set('userId', _id)
-          cookies.set('userKey', key)
-         const user =  {displayName, userId: _id, userKey: key};
-      this.setGlobal({ user });
-      this.setState({userLoaded: true});
-      }
-    });
+      const displayName = this.state.displayName;
+      this.global.webSocket.sendRequest({
+        info : { displayName },
+        action: 'create',
+        type: 'user'
+      })
+      .then(data=> {
+        const { _id, key } = data.info.user;
+        if (_id && key) {
+            cookies.set('displayName', displayName)
+            cookies.set('userId', _id)
+            cookies.set('userKey', key)
+            const user =  {displayName, userId: _id, userKey: key};
+            this.setGlobal({ user });
+            this.setState({userLoaded: true});
+        }
+      });
   }
 
   render () {
@@ -78,7 +93,7 @@ class Auth extends Component {
         <div className="preAuth">
           <label>Name:</label>
           <input type="text" onChange={ this.handleChange } name="displayName"></input>
-          <button onClick={ this.submit }>Go!</button>
+          <button onClick={ this.submit.bind(this) }>Go!</button>
         </div> :
         <div className="App">  
             {this.props.children}

@@ -1,4 +1,4 @@
-import React, { Component } from 'reactn';
+import React, { Component, setGlobal } from 'reactn';
 import './App.css';
 import Header from '../header/header';
 import Routes from '../routes/routes';
@@ -8,7 +8,8 @@ import Auth from '../auth/auth';
 class App extends Component {
   constructor() {
     super();
-    this.createWebSocket();
+    var webSocket = this.createWebSocket();
+    setGlobal({ user: null, webSocket });
   }
 
   createWebSocket = () => {
@@ -16,12 +17,12 @@ class App extends Component {
     const	webSocket = new WebSocketAsPromised(URL, {
       packMessage: data => JSON.stringify(data),
       unpackMessage: data => JSON.parse(data),
-      attachRequestId: (data, requestId) => Object.assign({id: requestId}, data), 
-      extractRequestId: data => data && data.id,                               
+      attachRequestId: (data, requestId) => Object.assign({ requestId}, data), 
+      extractRequestId: data => data && data.requestId,                               
     });
     webSocket.onClose.addListener(event => {
       console.log(`Connection closed: ${event.reason}`)
-        this.createWebSocket();
+      this.createWebSocket();
     });
 
     webSocket.open().then(() => {
@@ -29,8 +30,7 @@ class App extends Component {
       this.setGlobal({ webSocket });
     });
 
-    
-
+    return webSocket;
   }
 
   render () {
