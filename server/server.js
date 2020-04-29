@@ -95,7 +95,7 @@ const wss = new WebSocket.Server({ port: 3030 });
 var clients = {};
 var channels = {};
 
-wss.on('connection', function connection(ws, request, client) {
+wss.on('connection', function connection(ws, request) {
   function messageOthers(data) {
     wss.clients.forEach(function each(client) {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
@@ -116,7 +116,7 @@ wss.on('connection', function connection(ws, request, client) {
       ws.send(JSON.stringify(data));
     }
   }
-
+ 
   function parseCookies (req) {
     var list = {},
         cookie = req.headers.cookie;
@@ -129,30 +129,9 @@ wss.on('connection', function connection(ws, request, client) {
     return list;
   }
 
-  var { displayName, userId, userKey } = parseCookies(request);
+  var { displayName, userId, userKey} = parseCookies(request);
+  var user = { displayName, userId, userKey};
 
-  if (displayName) {
-    if (userId && userKey) {
-      userService.validate({ displayName, userId, userKey })
-         .then(success => { 
-           if (success) {
-              clients[userId] = client;
-           }
-           else {
-
-           }
-         })
-         .catch(err => {})
-    }
-    else {
-      // new user
-      // clients[userId] = client;
-    }
-  }
-  else {
-
-  }
-  
   ws.on('message', function incoming(message) {
 
     var data = JSON.parse(message);
@@ -162,7 +141,7 @@ wss.on('connection', function connection(ws, request, client) {
       case 'game':
         switch (data.action) {
           case 'create':
-            getResult = gameService.create(info.gameType, info.user)
+            getResult = gameService.create(info.gameType, user)
               .then(game => {
                 messageAll({ 
                   info: { game },
@@ -184,7 +163,7 @@ wss.on('connection', function connection(ws, request, client) {
                 });
             break;
           case 'join':
-            getResult = gameService.join(info.id, info.user)
+            getResult = gameService.join(info.id, user)
               .then(() => {
                 messageAll({ 
                   info,
@@ -203,14 +182,21 @@ wss.on('connection', function connection(ws, request, client) {
         }
         break;
       case 'user':
-        switch (data.action) {
-          case 'create':
-            getResult = userService.create(info.displayName)
-              .then(user => { return { user }});
-              break;
+        switch (data.action) {         
           case 'validate':
-            getResult = userService.validate(info.user)
-              .then(success => { return { success }});
+            if (clients[userId]) {
+              getResult = new Promise(resolve => { resolve( {user})})
+            }
+            else {
+              if (info.displayName) {
+                displayName = info.displayName;
+              }
+              getResult = userService.validate(user)
+                .then(result => { 
+                  clients[userId] = ws;
+                  return { user: result }
+                });
+              }
             break;
           default: 
             break;

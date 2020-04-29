@@ -1,18 +1,35 @@
 const User = require('../models/user');
 
 function validate(user) {
+    var { displayName, userId, userKey } = user;
     return new Promise((resolve, reject) => {
-        User.findOne({ _id: user.userId}, function(err, result) {
-            if (err) {
-                reject(err); 
+        if (displayName) {
+            if (userId && userKey) {
+                User.findOne({ _id: userId}, function(err, result) {
+                    if (err) {
+                        reject(err); 
+                    }
+                    else if ((result != null &&  result.key == userKey)) {
+                        resolve(user);
+                    }        
+                    else {
+                        resolve(create(displayName).then(result => { 
+                            user.userId = result.userId; 
+                            user.userKey = result.userKey
+                        }));
+                    }
+                });
             }
-            else if ((result != null &&  result.key == user.userKey)) {
-                resolve(true);
-            }        
             else {
-                reject("Invalid credentials")
+                resolve(create(displayName).then(result => { 
+                    user.userId = result.userId; 
+                    user.userKey = result.userKey
+                }));
             }
-        });
+        }
+        else {
+            reject("Display name is required");
+        }
     });
 }
 
