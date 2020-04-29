@@ -2,6 +2,24 @@ import { PureComponent } from 'reactn';
 
 export default class Component extends PureComponent {
 
+    sendRequest (data) {
+        const ws = this.global.webSocket;
+        if (ws) {
+            if (ws.isOpened) {
+                return ws.sendRequest(data);
+            }
+            else {
+                return ws.open().then(() => {
+                    return ws.sendRequest(data);
+                })
+                .catch(() => { return this.sendRequest(data)});
+            }
+        }
+        else {
+
+        }
+    }
+
     addWebSocketListener (type, action, callback) {
         if (this.webSocketListeners.length === 0) {
             var socket = this.global.webSocket;

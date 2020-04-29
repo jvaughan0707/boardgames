@@ -21,14 +21,15 @@ class App extends Component {
       extractRequestId: data => data && data.requestId,                               
     });
     webSocket.onClose.addListener(event => {
-      console.log(`Connection closed: ${event.reason}`)
       this.createWebSocket();
     });
 
     webSocket.open().then(() => {
-      console.log('connected');
       this.setGlobal({ webSocket });
-    });
+    })
+    .catch(() => setTimeout(() => {
+      this.createWebSocket()
+    }, 1000));
 
     return webSocket;
   }

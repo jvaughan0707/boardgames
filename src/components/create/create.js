@@ -10,12 +10,11 @@ class Create extends Component {
 	
 	createGame = () => {
 		var info = { gameType: "Skull", user: this.global.user };
-		this.global.webSocket.send(JSON.stringify({
+		this.sendRequest({
 			info,
 			action: 'create',
 			type: 'game'
-		}))
-		this.setState({redirect: true});
+		}).then(() => this.setState({redirect: true}));
 	}
 
 	render () {

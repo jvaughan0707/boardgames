@@ -2,9 +2,8 @@ import React from 'react';
 import { useGlobal } from 'reactn';
 import Loading from '../loading/loading'
 
-const LobbyTiles = ({lobbies, gamesLoaded}) => {
+const LobbyTiles = ({lobbies, gamesLoaded, deleteGame, joinGame}) => {
 	const [ user ] = useGlobal('user');
-	const [webSocket] = useGlobal('webSocket');
     return ( gamesLoaded ? 
         (lobbies.length > 0 ? 
         <table>
@@ -22,7 +21,7 @@ const LobbyTiles = ({lobbies, gamesLoaded}) => {
         var key = "game" + game._id
         var isOwner = game.ownerId === user.userId;
         return isOwner ? 
-        <tr id={key} key = {key}>
+        <tr id={key} key={key}>
             <td>{game.owner}</td>
             <td></td>
             <td><button type="button" onClick={() => deleteGame(game._id)}>Cancel</button></td>
@@ -30,30 +29,15 @@ const LobbyTiles = ({lobbies, gamesLoaded}) => {
             <td><input type="text" defaultValue={`/play/${game._id}`} /></td>
         </tr> :
         
-        <tr id={key} key = {key}>
+        <tr id={key} key={key}>
             <td>{game.owner}</td>
             <td>{game.gameType}</td>
             <td><button type="button" onClick={() => joinGame(game._id)}>Accept</button></td>
         </tr>
     }
     
-    function deleteGame (id) {
-        var info = { id };
-        webSocket.send(JSON.stringify({
-            info,
-            action: 'delete',
-            type: 'game'
-        }))
-    }
     function invite () {}
-    function joinGame (id) {
-        var info = { id, user };
-        webSocket.send(JSON.stringify({
-            info,
-            action: 'join',
-            type: 'game'
-        }))
-    }
+    
 }
     
 export default LobbyTiles

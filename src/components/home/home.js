@@ -10,19 +10,17 @@ class Home extends Component {
     }
 
     componentDidMount() {
-        if (this.global.webSocket) {
-            this.global.webSocket.sendRequest({
-                info : {},
-                action: 'get',
-                type: 'game'
-            }).then((data) => {
-                this.setState({ games: data.info.games, gamesLoaded: true })
-            });
-            
-            this.addWebSocketListener("game", "create", this.onGameCreated.bind(this));
-    
-            this.addWebSocketListener("game", "delete", this.onGameDeleted.bind(this));
-        }
+        this.sendRequest({
+            info : {},
+            action: 'get',
+            type: 'game'
+        }).then((data) => {
+            this.setState({ games: data.info.games, gamesLoaded: true })
+        });
+        
+        this.addWebSocketListener("game", "create", this.onGameCreated.bind(this));
+
+        this.addWebSocketListener("game", "delete", this.onGameDeleted.bind(this));
     }
 
     componentWillUnmount() {
@@ -40,6 +38,24 @@ class Home extends Component {
         this.setState({ games })
     }
 
+    deleteGame (id) {
+        var info = { id };
+        this.sendRequest({
+            info,
+            action: 'delete',
+            type: 'game'
+        });
+    }
+
+    joinGame (id) {
+        var info = { id };
+        this.sendRequest({
+            info,
+            action: 'join',
+            type: 'game'
+        });
+    }
+
 	render() {
         var openLobbies = this.state.games.filter(g => !g.started);
         var myActiveGames = this.state.games.filter(g => g.ownerId === this.global.user.userId && g.started);
@@ -47,7 +63,7 @@ class Home extends Component {
             <div className="page">
                 <div id="activeSearchesContainer" className="container">
                     <h2>Matching</h2>
-                    <LobbyTiles lobbies={openLobbies} gamesLoaded={this.state.gamesLoaded}></LobbyTiles>
+                    <LobbyTiles lobbies={openLobbies} gamesLoaded={this.state.gamesLoaded} deleteGame={this.deleteGame} joinGame={this.joinGame}></LobbyTiles>
                 </div>
             
                 <div id="activeGamesContainer" className="container">

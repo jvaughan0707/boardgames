@@ -1,7 +1,6 @@
 const app = require('./app');
 const debug = require('debug')('express-react:server');
 const http = require('http');
-const WebSocket = require('ws');
 
 /**
  * Get port from environment and store in Express.
@@ -87,12 +86,16 @@ function onListening() {
 /**
  * Web sockets
  */
+const WebSocket = require('ws');
 var gameService = require('./services/game-service');
 var userService = require('./services/user-service');
 
 const wss = new WebSocket.Server({ port: 3030 });
 
-wss.on('connection', function connection(ws) {
+var clients = {};
+var channels = {};
+
+wss.on('connection', function connection(ws, request, client) {
   function messageOthers(data) {
     wss.clients.forEach(function each(client) {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
@@ -113,8 +116,45 @@ wss.on('connection', function connection(ws) {
       ws.send(JSON.stringify(data));
     }
   }
+
+  function parseCookies (req) {
+    var list = {},
+        cookie = req.headers.cookie;
+
+    cookie && cookie.split(';').forEach(function( cookie ) {
+      var parts = cookie.split('=');
+      list[parts.shift().trim()] = decodeURI(parts.join('='));
+    });
+
+    return list;
+  }
+
+  var { displayName, userId, userKey } = parseCookies(request);
+
+  if (displayName) {
+    if (userId && userKey) {
+      userService.validate({ displayName, userId, userKey })
+         .then(success => { 
+           if (success) {
+              clients[userId] = client;
+           }
+           else {
+
+           }
+         })
+         .catch(err => {})
+    }
+    else {
+      // new user
+      // clients[userId] = client;
+    }
+  }
+  else {
+
+  }
   
   ws.on('message', function incoming(message) {
+
     var data = JSON.parse(message);
     var info = data.info;
     var getResult;
@@ -170,8 +210,8 @@ wss.on('connection', function connection(ws) {
               break;
           case 'validate':
             getResult = userService.validate(info.user)
-              .then(user => { return { user }});
-              break;
+              .then(success => { return { success }});
+            break;
           default: 
             break;
         }
