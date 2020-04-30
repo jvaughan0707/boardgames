@@ -10,50 +10,30 @@ class Home extends Component {
     }
 
     componentDidMount() {
-        this.sendRequest({
-            info : {},
-            action: 'get',
-            type: 'game'
-        }).then((data) => {
-            this.setState({ games: data.info.games, gamesLoaded: true })
+        const ws = this.global.webSocket;
+        ws.emit('getGames', games => {
+            this.setState({ games, gamesLoaded: true })
         });
-        
-        this.addWebSocketListener("game", "create", this.onGameCreated.bind(this));
 
-        this.addWebSocketListener("game", "delete", this.onGameDeleted.bind(this));
-    }
+        ws.on('createGame',(game) => {
+            var games = this.state.games.concat(game);
+            this.setState({ games })
+        });
 
-    componentWillUnmount() {
-        this.removeWebSocketListeners();
-    }
-
-    onGameCreated (data) {
-        const game = data.info.game
-        var games = this.state.games.concat(game);
-        this.setState({ games })
-    }
-    onGameDeleted (data) {
-        const id = data.info.id
-        var games = this.state.games.filter(g => g._id !== id);
-        this.setState({ games })
+        ws.on('deleteGame',(gameId) => {
+            var games = this.state.games.filter(g => g._id !== gameId);
+            this.setState({ games })
+        });
     }
 
     deleteGame (id) {
-        var info = { id };
-        this.sendRequest({
-            info,
-            action: 'delete',
-            type: 'game'
-        });
+        const ws = this.global.webSocket;
+        ws.emit('deleteGame', id);
     }
 
     joinGame (id) {
-        var info = { id };
-        this.sendRequest({
-            info,
-            action: 'join',
-            type: 'game'
-        });
+        const ws = this.global.webSocket;
+        ws.emit('joinGame', id);
     }
 
 	render() {
@@ -63,7 +43,7 @@ class Home extends Component {
             <div className="page">
                 <div id="activeSearchesContainer" className="container">
                     <h2>Matching</h2>
-                    <LobbyTiles lobbies={openLobbies} gamesLoaded={this.state.gamesLoaded} deleteGame={this.deleteGame} joinGame={this.joinGame}></LobbyTiles>
+                    <LobbyTiles lobbies={openLobbies} gamesLoaded={this.state.gamesLoaded} deleteGame={this.deleteGame.bind(this)} joinGame={this.joinGame.bind(this)}></LobbyTiles>
                 </div>
             
                 <div id="activeGamesContainer" className="container">

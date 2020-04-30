@@ -87,134 +87,108 @@ function onListening() {
  * Web sockets
  */
 const WebSocket = require('ws');
+const io = require('socket.io')(server);
+
 var gameService = require('./services/game-service');
 var userService = require('./services/user-service');
 
-const wss = new WebSocket.Server({ port: 3030 });
-
-var clients = {};
 var channels = {};
 
-wss.on('connection', function connection(ws, request) {
-  function messageOthers(data) {
-    wss.clients.forEach(function each(client) {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(data));
-      }
-    });
-  }
-  function messageAll(data) {
-    wss.clients.forEach(function each(client) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(JSON.stringify(data));
-      }
-    });
+io.on('connection', (ws) => {
+  var user = null;
+  var getUser;
+
+  function addListeners () {
+
+    ws.on('createGame', (gameType, cb) => 
+      gameService.create(gameType, user)
+      .then(game=> {
+        ws.emit('createGame', game);
+        cb && cb();
+      })
+    ); 
+
+    ws.on('deleteGame', (id, cb) => 
+      gameService.remove(id)
+      .then(() => { 
+        ws.emit('deleteGame', id);
+        cb && cb();
+      })
+    );
+
+    ws.on('joinGame', (gameId, cb) => 
+      gameService.join(gameId, user)
+      .then(() => {
+        ws.emit('joinGame', id);
+        cb && cb();
+      })
+    );
+    
+    ws.on('getGames', (cb) =>
+      gameService.get()
+      .then(games => { 
+        cb(games);
+      })
+    );
   }
 
-  function messageSender (data) {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(data));
-    }
-  }
- 
-  function parseCookies (req) {
+  if (!user) {
     var list = {},
-        cookie = req.headers.cookie;
+    cookie = ws.request.headers.cookie;
 
     cookie && cookie.split(';').forEach(function( cookie ) {
       var parts = cookie.split('=');
       list[parts.shift().trim()] = decodeURI(parts.join('='));
     });
+    var { displayName, userId, userKey } = list;
 
-    return list;
-  }
-
-  var { displayName, userId, userKey} = parseCookies(request);
-  var user = { displayName, userId, userKey};
-
-  ws.on('message', function incoming(message) {
-
-    var data = JSON.parse(message);
-    var info = data.info;
-    var getResult;
-    switch (data.type) {
-      case 'game':
-        switch (data.action) {
-          case 'create':
-            getResult = gameService.create(info.gameType, user)
-              .then(game => {
-                messageAll({ 
-                  info: { game },
-                  action: 'create',
-                  type: 'game'});
-                  
-                return null;
-              })
-            break;
-          case 'delete':
-            getResult = gameService.remove(info.id)
-              .then(() => { 
-                messageAll({ 
-                  info : { id: info.id },
-                  action: 'delete',
-                  type: 'game'});
-                  
-                  return null;
-                });
-            break;
-          case 'join':
-            getResult = gameService.join(info.id, user)
-              .then(() => {
-                messageAll({ 
-                  info,
-                  action: 'join',
-                  type: 'game'});
-
-                  return null;
-                });
-            break;
-          case 'get':
-            getResult = gameService.get()
-             .then(games => { return { games }});
-            break;
-          default:
-            break;
-        }
-        break;
-      case 'user':
-        switch (data.action) {         
-          case 'validate':
-            if (clients[userId]) {
-              getResult = new Promise(resolve => { resolve( {user})})
-            }
-            else {
-              if (info.displayName) {
-                displayName = info.displayName;
-              }
-              getResult = userService.validate(user)
-                .then(result => { 
-                  clients[userId] = ws;
-                  return { user: result }
-                });
-              }
-            break;
-          default: 
-            break;
-        }
-        break;
-      default:
-        break;
+    if (displayName) {
+      getUser = userService
+        .validate({ displayName, userId, userKey })
+        .then((result) => { 
+          addListeners();
+          user = result;
+          return result;
+        })
     }
+  }
+  
 
-    if (getResult) {
-      getResult.then(result => messageSender({ 
-        success: true,
-        info : result,
-        requestId : data.requestId }))
-      .catch(err => messageSender({ 
-        success: false,
-        info : {err},
-        requestId : data.requestId }));
+  ws.on('getUser', (cb) => {
+    if (user) {
+      cb(user);
+    }
+    else if (getUser) {
+      getUser.then(u => cb(u));
+    }
+    else {
+      cb(null);
     }
   });
+
+  ws.on('createUser', (displayName, cb) => {
+    if (user || getUser) {
+      //throw
+    }
+    else {
+       userService.create(displayName)
+      .then((result) => { 
+        addListeners();
+        user = result;
+        cb(result);
+      });
+    }
+  });
+       
+
+  // if (getResult) {
+  //   getResult.then(result => messageSender({ 
+  //     success: true,
+  //     info : result,
+  //     requestId : data.requestId }))
+  //   .catch(err => messageSender({ 
+  //     success: false,
+  //     info : {err},
+  //     requestId : data.requestId }));
+  // }
 });

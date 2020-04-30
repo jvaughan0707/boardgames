@@ -18,6 +18,7 @@
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.1.2",
     "reactn": "^2.2.7",
+    "socket.io": "^2.3.0",
     "universal-cookie": "^4.0.3",
     "websocket-as-promised": "^1.0.1",
     "ws": "^7.2.3"

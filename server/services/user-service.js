@@ -13,18 +13,12 @@ function validate(user) {
                         resolve(user);
                     }        
                     else {
-                        resolve(create(displayName).then(result => { 
-                            user.userId = result.userId; 
-                            user.userKey = result.userKey
-                        }));
+                        resolve(create(displayName));
                     }
                 });
             }
             else {
-                resolve(create(displayName).then(result => { 
-                    user.userId = result.userId; 
-                    user.userKey = result.userKey
-                }));
+                resolve(create(displayName));
             }
         }
         else {
@@ -45,6 +39,5 @@ function create (displayName) {
 }
 
 module.exports = { 
-    create,
     validate
 }
