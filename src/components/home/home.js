@@ -59,8 +59,8 @@ class Home extends Component {
                                 {
                                     return (
                                     <tr id={"game" + game._id}>
-                                        <td><button type="button" onclick="joinGame(@game.Id)">Continue</button></td>
-                                        <td> <button type="button" onclick="deleteGame(@game.Id)">Delete</button></td>
+                                        <td><button type="button">Go To Game</button></td>
+                                        <td><button type="button">Quit</button></td>
                                     </tr>)
                                 })
                             }

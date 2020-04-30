@@ -4,35 +4,38 @@ const ReadPreference = require('mongodb').ReadPreference;
 
 require('../mongo').connect();
 
-async function get() {
+function get() {
     const query = Game.find({}).read(ReadPreference.NEAREST);
-    return await query.exec();
+    return query.exec();
 }
 
-async function getById(id) {
+function getById(id) {
     const query = Game.findById(id).read(ReadPreference.NEAREST);
-    const game = await query.exec();
-    await getPlayerStates(game);
-    return game;   
+    return query.exec().then(game => {
+        return getPlayerStates(game);
+    });
 }
 
-async function create(gameType, user) { 
+function create(gameType, user) { 
     const { displayName, userId } = user
     const game = new Game({ gameType, owner: displayName, ownerId: userId });
 
-    return await game.save();
+    return game.save();
 }
 
-async function remove(id) {
+function remove(id) {
     const query = Game.deleteOne({ _id: id })
-    return await query.exec();
+    return query.exec();
 }
 
-async function getPlayerStates(game) {
+function getPlayerStates(game) {
     const query = PlayerState.find({gameId:game._id}).read(ReadPreference.NEAREST);
   
-    const states = await query.exec();
-    game.playerStates = states;
+    return query.exec()
+    .then(states => {
+        game.playerStates = states;
+        return game;
+    });
 }
 
 module.exports = {

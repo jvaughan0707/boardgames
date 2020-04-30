@@ -86,12 +86,12 @@ function onListening() {
 /**
  * Web sockets
  */
-const WebSocket = require('ws');
 const io = require('socket.io')(server);
 
 var gameService = require('./services/game-service');
 var userService = require('./services/user-service');
 
+//TODO: Initialise when server starts if there are any active games
 var channels = {};
 
 io.on('connection', (ws) => {
@@ -104,25 +104,24 @@ io.on('connection', (ws) => {
       gameService.create(gameType, user)
       .then(game=> {
         ws.emit('createGame', game);
+        channels[game._id] = [{ws, userId: user.userId}];
         cb && cb();
       })
     ); 
 
     ws.on('deleteGame', (id, cb) => 
-      gameService.remove(id)
+      gameService.remove(id, user)
       .then(() => { 
         ws.emit('deleteGame', id);
         cb && cb();
       })
     );
 
-    ws.on('joinGame', (gameId, cb) => 
-      gameService.join(gameId, user)
-      .then(() => {
-        ws.emit('joinGame', id);
-        cb && cb();
-      })
-    );
+    ws.on('joinGame', (gameId, cb) => {
+      channels[gameId].push({ws, userId: user.userId});
+      ws.emit('joinGame', id);
+      cb && cb();
+    });
     
     ws.on('getGames', (cb) =>
       gameService.get()
@@ -130,6 +129,21 @@ io.on('connection', (ws) => {
         cb(games);
       })
     );
+
+    ws.on('getGame', (cb) => {
+      for (let gameId in channels) {
+        for(let conn of channels[gameId]) {
+          if (conn.userId == user.userId) {
+            gameService.getById(gameId)
+            .then(game => { 
+              cb(game);
+            });
+            return;
+          }
+        }
+      }
+      cb(null);
+    });
   }
 
   if (!user) {
@@ -171,12 +185,13 @@ io.on('connection', (ws) => {
       //throw
     }
     else {
-       userService.create(displayName)
-      .then((result) => { 
-        addListeners();
-        user = result;
-        cb(result);
-      });
+       getUser = userService.create(displayName)
+        .then((result) => { 
+          addListeners();
+          user = result;
+          cb(result);
+          return result;
+        });
     }
   });
        

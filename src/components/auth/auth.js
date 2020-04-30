@@ -48,7 +48,7 @@ class Auth extends Component {
     }
     return (
         !this.state.userLoaded ? <Loading /> :
-        this.global.user == null ? 
+        !this.global.user ? 
         <div className="preAuth">
           <label>Name:</label>
           <input type="text" onChange={ this.handleChange } name="displayName"></input>

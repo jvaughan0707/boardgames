@@ -25,19 +25,14 @@ const LobbyTiles = ({lobbies, gamesLoaded, deleteGame, joinGame}) => {
             <td>{game.owner}</td>
             <td></td>
             <td><button type="button" onClick={() => deleteGame(game._id)}>Cancel</button></td>
-            <td><button type="button"onClick={invite}>Invite</button></td>
-            <td><input type="text" defaultValue={`/play/${game._id}`} /></td>
         </tr> :
         
         <tr id={key} key={key}>
             <td>{game.owner}</td>
             <td>{game.gameType}</td>
-            <td><button type="button" onClick={() => joinGame(game._id)}>Accept</button></td>
+            <td><button type="button" onClick={() => joinGame(game._id)}>Join</button></td>
         </tr>
     }
-    
-    function invite () {}
-    
 }
     
 export default LobbyTiles

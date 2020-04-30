@@ -15,6 +15,9 @@ const Header = () => {
 					<NavLink exact to="/create" >
 						Create
 					</NavLink>
+					<NavLink exact to="/play" >
+						Play
+					</NavLink>
 				</div>
 			</div>
 		);
