@@ -91,20 +91,17 @@ const io = require('socket.io')(server);
 var gameService = require('./services/game-service');
 var userService = require('./services/user-service');
 
-//TODO: Initialise when server starts if there are any active games
-var channels = {};
-
 io.on('connection', (ws) => {
   var user = null;
   var getUser;
 
   function addListeners () {
 
-    ws.on('createGame', (gameType, cb) => 
-      gameService.create(gameType, user)
+    ws.on('createGame', ({type, title}, cb) => 
+      gameService.create(type, title, user)
       .then(game=> {
-        ws.emit('createGame', game);
-        channels[game._id] = [{ws, userId: user.userId}];
+        io.emit('createGame', game);
+        ws.join(game._id);
         cb && cb();
       })
     ); 
@@ -112,14 +109,14 @@ io.on('connection', (ws) => {
     ws.on('deleteGame', (id, cb) => 
       gameService.remove(id, user)
       .then(() => { 
-        ws.emit('deleteGame', id);
+        io.emit('deleteGame', id);
         cb && cb();
       })
     );
 
     ws.on('joinGame', (gameId, cb) => {
-      channels[gameId].push({ws, userId: user.userId});
-      ws.emit('joinGame', id);
+      ws.join(gameId);
+      io.emit('joinGame', gameId, user.userId);
       cb && cb();
     });
     
@@ -130,41 +127,40 @@ io.on('connection', (ws) => {
       })
     );
 
-    ws.on('getGame', (cb) => {
-      for (let gameId in channels) {
-        for(let conn of channels[gameId]) {
-          if (conn.userId == user.userId) {
-            gameService.getById(gameId)
-            .then(game => { 
-              cb(game);
-            });
-            return;
-          }
-        }
+    ws.on('getGame', (id, cb) => {
+      if (id) {
+        gameService.getById(id)
+        .then(game => { 
+          cb(game);
+        });
       }
-      cb(null);
+      else {
+        gameService.getCurrent()
+        .then(game => { 
+          cb(game);
+        });
+      }
+   
     });
   }
 
-  if (!user) {
-    var list = {},
-    cookie = ws.request.headers.cookie;
+  var cookies = {};
 
-    cookie && cookie.split(';').forEach(function( cookie ) {
-      var parts = cookie.split('=');
-      list[parts.shift().trim()] = decodeURI(parts.join('='));
-    });
-    var { displayName, userId, userKey } = list;
+  ws.request.headers.cookie && 
+  ws.request.headers.cookie.split(';').forEach(function(cookie) {
+    var parts = cookie.split('=');
+    cookies[parts.shift().trim()] = decodeURI(parts.join('='));
+  });
+  var { displayName, userId, userKey } = cookies;
 
-    if (displayName) {
-      getUser = userService
-        .validate({ displayName, userId, userKey })
-        .then((result) => { 
-          addListeners();
-          user = result;
-          return result;
-        })
-    }
+  if (displayName) {
+    getUser = userService
+      .validate({ displayName, userId, userKey })
+      .then((result) => { 
+        addListeners();
+        user = result;
+        return result;
+      })
   }
   
 

@@ -17,13 +17,9 @@ class Play extends Component {
 	
 	render () {
 		return (
-			<div className="page">
-				{
-				 	this.state.gameLoading ? <Loading/> :
-					this.state.game ? <h2>{this.state.game.gameType}</h2> :
-					<p>You have no active games</p>
-				}
-			</div>
+			this.state.gameLoading ? <Loading/> :
+			this.state.game ? <h2>{this.state.game.gameType}</h2> :
+			<p>You have no active games</p>
 		)
 	}
 }

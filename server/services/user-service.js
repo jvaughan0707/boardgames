@@ -39,5 +39,6 @@ function create (displayName) {
 }
 
 module.exports = { 
-    validate
+    validate,
+    create
 }

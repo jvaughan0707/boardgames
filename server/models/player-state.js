@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 const schema = new mongoose.Schema({
     playerId: String,
     gameId: String,
-    state: String
+    public: String,
+    private: String
 })
 
 const PlayerState = mongoose.model('PlayerState', schema);

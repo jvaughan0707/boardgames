@@ -22,7 +22,7 @@ class Auth extends Component {
     const ws = this.global.webSocket;
     
     if (ws) {
-      ws.emit('createUser', { displayName }, user => this.setUser(user))
+      ws.emit('createUser', displayName, user => this.setUser(user))
     }
   }
 

@@ -9,14 +9,11 @@ const Header = () => {
 			<div id="Header">
         		<h1>Welcome {user.displayName}!</h1> 
 				<div className="menu">
-					<NavLink exact to="/">
-						Home
-					</NavLink>
-					<NavLink exact to="/create" >
-						Create
-					</NavLink>
-					<NavLink exact to="/play" >
+					<NavLink exact to="/play">
 						Play
+					</NavLink>
+					<NavLink exact to="/contribute" >
+						Contribute
 					</NavLink>
 				</div>
 			</div>

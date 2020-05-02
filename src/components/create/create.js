@@ -1,30 +1,25 @@
 import React from 'reactn';
 import Component from '../component'
-import { Redirect } from 'react-router';
+
+const games = [{type: "skull", title: "Skull"}]
 
 class Create extends Component {
-	constructor() {
-        super();
-        this.state = { redirect: false }
-	}
-	
-	createGame = () => {
-		var gameType= "Skull";
+	createGame = (game) => {
 		const ws = this.global.webSocket;
-		ws.emit('createGame', gameType, () => this.setState({redirect: true}));
+		ws.emit('createGame', game);
 	}
 
 	render () {
-		if (this.state.redirect) {
-			return <Redirect push to="/" />;
-		}
-		
 		return (
-			<div className="page">
-				<h1>Create</h1>
+			<>
+				<h2>Create</h2>
 				<p>Select a game type below to create a lobby.</p>
-				<button onClick={this.createGame}>Skull</button>
-			</div>
+				{
+					games.map(game => {
+						return <button key={game.type} onClick={() => this.createGame(game)}>{game.title}</button>
+					})
+				}
+			</>
 		)
 	}
 }

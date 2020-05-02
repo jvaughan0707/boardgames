@@ -5,33 +5,42 @@ const ReadPreference = require('mongodb').ReadPreference;
 require('../mongo').connect();
 
 function get() {
-    const query = Game.find({}).read(ReadPreference.NEAREST);
-    return query.exec();
+    return Game.find({})
+        .read(ReadPreference.NEAREST)
+        .exec();
 }
 
 function getById(id) {
-    const query = Game.findById(id).read(ReadPreference.NEAREST);
-    return query.exec().then(game => {
-        return getPlayerStates(game);
-    });
+    return Game.findById(id)
+        .read(ReadPreference.NEAREST)
+        .exec().then(game => {
+            return getPlayerStates(game);
+        });
 }
 
-function create(gameType, user) { 
-    const { displayName, userId } = user
-    const game = new Game({ gameType, owner: displayName, ownerId: userId });
+function getCurrent(userId) {
+    return PlayerState.findOne({userId})
+        .read(ReadPreference.NEAREST)
+        .exec().then(ps => {
+            return ps ?
+            getById(ps.gameId) :
+            null;
+        });
+}
 
-    return game.save();
+function create(gameType, title, user) { 
+    const { displayName, userId } = user
+
+    return new Game({ gameType, title, owner: displayName, ownerId: userId })
+        .save();
 }
 
 function remove(id) {
-    const query = Game.deleteOne({ _id: id })
-    return query.exec();
+    return Game.deleteOne({ _id: id }).exec();
 }
 
 function getPlayerStates(game) {
-    const query = PlayerState.find({gameId:game._id}).read(ReadPreference.NEAREST);
-  
-    return query.exec()
+    return PlayerState.find({gameId:game._id}).read(ReadPreference.NEAREST).exec()
     .then(states => {
         game.playerStates = states;
         return game;
@@ -41,6 +50,7 @@ function getPlayerStates(game) {
 module.exports = {
     get,
     getById,
+    getCurrent,
     create,
     remove
 };

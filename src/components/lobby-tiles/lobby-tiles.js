@@ -23,7 +23,7 @@ const LobbyTiles = ({lobbies, gamesLoaded, deleteGame, joinGame}) => {
         return isOwner ? 
         <tr id={key} key={key}>
             <td>{game.owner}</td>
-            <td></td>
+            <td>{game.gameType}</td>
             <td><button type="button" onClick={() => deleteGame(game._id)}>Cancel</button></td>
         </tr> :
         
