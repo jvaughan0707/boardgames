@@ -97,53 +97,62 @@ io.on('connection', (ws) => {
 
   function addListeners () {
 
-    ws.on('createGame', ({type, title}, cb) => 
+    ws.on('createLobby', ({type, title}, cb) => 
       gameService.create(type, title, user)
-      .then(game=> {
-        io.emit('createGame', game);
-        ws.join(game._id);
-        cb && cb();
-      })
+        .then(lobby=> {
+          io.emit('lobbyCreated', lobby);
+          ws.emit('joinedLobby');
+          ws.join(lobby.gameId);
+          cb && cb(lobby);
+        })
     ); 
 
-    ws.on('deleteGame', (id, cb) => 
+    ws.on('deleteLobby', (id) => 
       gameService.remove(id, user)
       .then(() => { 
-        io.emit('deleteGame', id);
-        cb && cb();
+        io.emit('lobbyDeleted', id);
+        io.to(id).emit('leftLobby');
       })
     );
 
-    ws.on('joinGame', (gameId, cb) => {
+    ws.on('joinLobby', (gameId) => {
       ws.join(gameId);
-      io.emit('joinGame', gameId, user.userId);
-      cb && cb();
+      gameService.join(gameId, user)
+      .then(() => {
+        io.emit('lobbyPlayerJoined', user, gameId );
+        ws.emit('joinedLobby');
+      });
+    });
+
+    ws.on('leaveLobby', (gameId) => {
+      ws.leave(gameId);
+      gameService.leave(gameId, user).then(() => {
+        io.emit('lobbyPlayerLeft', user, gameId );
+        ws.emit('leftLobby');
+      });
     });
     
-    ws.on('getGames', (cb) =>
-      gameService.get()
-      .then(games => { 
-        cb(games);
+    ws.on('getOpenLobbies', (cb) =>
+      gameService.getLobbies()
+      .then(lobbies => { 
+        cb(lobbies);
       })
     );
 
-    ws.on('getGame', (id, cb) => {
-      if (id) {
-        gameService.getById(id)
-        .then(game => { 
-          cb(game);
-        });
-      }
-      else {
-        gameService.getCurrent()
-        .then(game => { 
-          cb(game);
-        });
-      }
-   
-    });
-  }
+    ws.on('getUserGameStatus', (cb) =>
+      gameService.getUserGameStatus(user.userId)
+        .then(result => { 
+          cb(result);
+        })
+    );
 
+    ws.on('getCurrentGame', (cb) =>
+      gameService.getCurrentGame(user.userId)
+      .then(game => { 
+        cb(game);
+      })
+    );
+  }
   var cookies = {};
 
   ws.request.headers.cookie && 
@@ -158,17 +167,14 @@ io.on('connection', (ws) => {
       .validate({ displayName, userId, userKey })
       .then((result) => { 
         addListeners();
-        user = result;
+        user = {displayName, userId: result.userId};
         return result;
       })
   }
   
 
   ws.on('getUser', (cb) => {
-    if (user) {
-      cb(user);
-    }
-    else if (getUser) {
+    if (getUser) {
       getUser.then(u => cb(u));
     }
     else {

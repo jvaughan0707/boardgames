@@ -1,62 +1,65 @@
 import React from 'reactn';
 import Component from '../component'
 import LobbyTiles from '../lobby-tiles/lobby-tiles'
+import Loading from '../loading/loading'
 
 class Lobbies extends Component {
-
     constructor() {
         super();
-        this.state = { games: [], gamesLoaded: false }
+        this.state = { loading: true, lobbies: [] }
     }
 
     componentDidMount() {
         const ws = this.global.webSocket;
-        ws.emit('getGames', games => {
-            this.setState({ games, gamesLoaded: true })
-        });
+        ws.on('lobbyCreated', this.onLobbyCreated.bind(this));
+        ws.on('lobbyPlayerJoined', this.onLobbyPlayerJoined.bind(this));
+        ws.on('lobbyDeleted', this.onLobbyDeleted.bind(this));
+        ws.on('lobbyPlayerLeft', this.onLobbyPlayerLeft.bind(this));
 
-        ws.on('createGame', this.onGameCreated.bind(this));
-        ws.on('deleteGame', this.onGameDeleted.bind(this));
-        ws.on('joinGame', this.onGameJoined.bind(this));
+        ws.emit('getOpenLobbies', lobbies => this.setState({lobbies, loading: false}));
     }
 
     componentWillUnmount() {
         const ws = this.global.webSocket;
-        ws.off('createGame', this.onGameCreated.bind(this));
-        ws.off('deleteGame', this.onGameDeleted.bind(this));
-        ws.off('joinGame', this.onGameJoined.bind(this));
+        ws.off('lobbyCreated', this.onLobbyCreated.bind(this));
+        ws.off('lobbyPlayerJoined', this.onLobbyPlayerJoined.bind(this));
+        ws.off('lobbyDeleted', this.onLobbyDeleted.bind(this));
+        ws.off('lobbyPlayerLeft', this.onLobbyPlayerLeft.bind(this));
     }
 
-    onGameCreated (game) {
-        var games = this.state.games.concat(game);
-        this.setState({ games })
+    onLobbyCreated (lobby) {
+        var lobbies = this.state.lobbies.concat(lobby);
+        this.setState({ lobbies })
     }
 
-    onGameDeleted (gameId) {
-        var games = this.state.games.filter(g => g._id !== gameId);
-        this.setState({ games })
+    onLobbyDeleted (gameId) {
+        var lobbies = this.state.lobbies.filter(g => g.gameId !== gameId);
+        this.setState({ lobbies })
     }
 
-    onGameJoined (gameId, userId) {
-       
+  
+    onLobbyPlayerJoined (user, gameId) {
+        var lobbies = this.state.lobbies;
+        var lobby = lobbies.find(g => g.gameId === gameId);
+        lobby.players.push(user);
+        this.setState({ lobbies })
     }
 
-    deleteGame (id) {
-        const ws = this.global.webSocket;
-        ws.emit('deleteGame', id);
-    }
-
-    joinGame (id) {
-        const ws = this.global.webSocket;
-        ws.emit('joinGame', id);
+    onLobbyPlayerLeft (user, gameId) {
+        var lobbies = this.state.lobbies;
+        var lobby = lobbies.find(g => g.gameId === gameId);
+        lobby.players = lobby.players.filter(p => p.userId !== user.userId);
+        this.setState({ lobbies })
     }
 
 	render() {
-        var openLobbies = this.state.games.filter(g => !g.started);
+
 		return (
+            this.state.loading ? 
+            <Loading/> :
             <div id="openLobbies" className="container">
                 <h2>Matching</h2>
-                <LobbyTiles lobbies={openLobbies} gamesLoaded={this.state.gamesLoaded} deleteGame={this.deleteGame.bind(this)} joinGame={this.joinGame.bind(this)}></LobbyTiles>
+                <LobbyTiles lobbies={this.state.lobbies} inLobby={this.props.inLobby}></LobbyTiles>
             </div>
 		);
 	}

@@ -1,7 +1,13 @@
 const mongoose = require('mongoose');
 const schema = new mongoose.Schema({
-    playerId: String,
-    gameId: String,
+    playerId: {
+		type: mongoose.Schema.ObjectId,
+        ref: 'User', 
+        required: true},
+    gameId: {
+		type: mongoose.Schema.ObjectId,
+        ref: 'Game', 
+        required: true},
     public: String,
     private: String
 })

@@ -1,56 +1,139 @@
 const Game = require('../models/game');
 const PlayerState = require('../models/player-state');
 const ReadPreference = require('mongodb').ReadPreference;
+const lookups = [
+    {
+        $lookup: {
+            from: "playerstates",
+            localField: "_id",
+            foreignField: "gameId",
+            as: "playerStates"
+        }
+    },
+    {
+        $lookup: {
+            from: "users",
+            let: { ownerId: "$ownerId" },
+            as: "owner",
+            pipeline: [
+                { $match: { "$expr": { $eq: [ "$_id",  "$$ownerId" ] }}},
+                { $project: { key: 0, _id: 0 } }]
+        } 
+    },
+    {
+        $unwind: "$owner"
+    },
+    { 
+        $addFields: { owner: { userId: "$ownerId" }, gameId: "$_id" } 
+    },  
+    { 
+        $project: { _id: 0, __v: 0, ownerId: 0} 
+    } 
+];
+
 
 require('../mongo').connect();
 
-function get() {
-    return Game.find({})
+function getLobbies() {
+    var agr = [
+        {
+            "$match": { started: false }
+        },
+        ...lookups,
+        {
+            $lookup: {
+                from: "users",
+                let: { playerStates: "$playerStates", ownerId: "$owner.userId" },
+                as: "players",
+                pipeline: [
+                    { $match: { $expr: { $and: 
+                        [{ $in: [ "$_id",  "$$playerStates.playerId" ] },
+                        { $ne: [ "$_id", "$$ownerId" ] }]
+                    }}},
+                    { $addFields: { userId: "$_id" }},
+                    { $project: { key: 0, _id: 0, __v: 0 } }]
+            }
+        },
+        { 
+            $project: { playerStates: 0, started: 0, players: { key: 0, __v: 0, _id: 0 }} 
+        }
+    ];
+
+    return Game.aggregate(agr)
         .read(ReadPreference.NEAREST)
         .exec();
 }
 
 function getById(id) {
-    return Game.findById(id)
+    var agr = [
+        {
+            "$match": { _id: id }
+        },
+        ...lookups,
+        {
+            $lookup: {
+                from: "users",
+                let: { playerStates: "$playerStates" },
+                as: "playerStates.player",
+                pipeline: [
+                    { $match: { "$expr": { $in: [ "$_id",  "$$playerStates.playerId" ] }}},
+                    { $addFields: { userId: "$_id" }},
+                    { $project: { key: 0, _id: 0, __v: 0 } }]
+            }
+        }
+    ];
+
+    return Game.aggregate(agr)
         .read(ReadPreference.NEAREST)
-        .exec().then(game => {
-            return getPlayerStates(game);
-        });
+        .exec()
+        .then(games => games.length > 0 ? games[0] : null);
 }
 
-function getCurrent(userId) {
-    return PlayerState.findOne({userId})
-        .read(ReadPreference.NEAREST)
-        .exec().then(ps => {
-            return ps ?
-            getById(ps.gameId) :
-            null;
-        });
+function getUserGameStatus (userId) {
+    return PlayerState
+        .findOne({playerId: userId})
+        .then(ps =>  ps ? Game.findById(ps.gameId, { started: 1}) : null);
 }
 
-function create(gameType, title, user) { 
-    const { displayName, userId } = user
+function getCurrentGame (userId) {
+    return PlayerState
+        .findOne({playerId: userId})
+        .then(ps => ps ? getById(ps.gameId) : null);
+}
 
-    return new Game({ gameType, title, owner: displayName, ownerId: userId })
-        .save();
+function create(type, title, user) { 
+    const { userId } = user
+
+    return new Game({ type, title, ownerId: userId })
+        .save()
+        .then(game => {
+            return join (game._id, user);
+        });
 }
 
 function remove(id) {
     return Game.deleteOne({ _id: id }).exec();
 }
 
-function getPlayerStates(game) {
-    return PlayerState.find({gameId:game._id}).read(ReadPreference.NEAREST).exec()
-    .then(states => {
-        game.playerStates = states;
-        return game;
-    });
+function join (gameId, user) {
+    return new PlayerState({ gameId, playerId: user.userId })
+        .save()
+        .then(() => getById(gameId));
+}
+
+function leave (gameId, user) {
+    return PlayerState.deleteOne({ gameId, playerId: user.userId })
+        .exec()
+        .then(() => Game.deleteOne({_id: gameId, ownerId: user.userId }))
 }
 
 module.exports = {
-    get,
+    getLobbies,
     getById,
-    getCurrent,
+    getUserGameStatus,
+    getCurrentGame,
     create,
-    remove
+    remove,
+    join,
+    leave
 };

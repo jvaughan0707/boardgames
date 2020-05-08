@@ -4,9 +4,9 @@ import Component from '../component'
 const games = [{type: "skull", title: "Skull"}]
 
 class Create extends Component {
-	createGame = (game) => {
+	createLobby = (info) => {
 		const ws = this.global.webSocket;
-		ws.emit('createGame', game);
+		ws.emit('createLobby', info);
 	}
 
 	render () {
@@ -16,7 +16,7 @@ class Create extends Component {
 				<p>Select a game type below to create a lobby.</p>
 				{
 					games.map(game => {
-						return <button key={game.type} onClick={() => this.createGame(game)}>{game.title}</button>
+						return <button key={game.type} onClick={() => this.createLobby(game)} disabled={this.props.inLobby}>{game.title}</button>
 					})
 				}
 			</>
