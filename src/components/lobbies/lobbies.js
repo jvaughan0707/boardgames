@@ -39,16 +39,24 @@ class Lobbies extends Component {
 
   
     onLobbyPlayerJoined (user, gameId) {
-        var lobbies = this.state.lobbies;
-        var lobby = lobbies.find(g => g.gameId === gameId);
-        lobby.players.push(user);
+        var lobbies = this.state.lobbies.map(lobby =>
+        {
+            if (lobby.gameId === gameId) {
+                lobby.players.push(user);
+            }
+            return lobby;
+        });
         this.setState({ lobbies })
     }
 
     onLobbyPlayerLeft (user, gameId) {
-        var lobbies = this.state.lobbies;
-        var lobby = lobbies.find(g => g.gameId === gameId);
-        lobby.players = lobby.players.filter(p => p.userId !== user.userId);
+        var lobbies = this.state.lobbies.map(lobby =>
+        {
+            if (lobby.gameId === gameId) {
+                lobby.players = lobby.players.filter(p => p.userId !== user.userId);
+            }
+            return lobby;
+        });
         this.setState({ lobbies })
     }
 
