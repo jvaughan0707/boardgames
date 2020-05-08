@@ -13,22 +13,25 @@ const lookups = [
     {
         $lookup: {
             from: "users",
-            let: { ownerId: "$ownerId" },
-            as: "owner",
+            let: { playerStates: "$playerStates", ownerId: "$owner.userId" },
+            as: "players",
             pipeline: [
-                { $match: { "$expr": { $eq: [ "$_id",  "$$ownerId" ] }}},
-                { $project: { key: 0, _id: 0 } }]
-        } 
-    },
-    {
-        $unwind: "$owner"
+                { $match: { $expr: { $and: 
+                    [{ $in: [ "$_id",  "$$playerStates.playerId" ] },
+                    { $ne: [ "$_id", "$$ownerId" ] }]
+                }}},
+                { $addFields: { userId: "$_id", isOwner: {
+                    $cond: [{$eq: ["$_id", "$$ownerId"]}, 1, 0]
+                  }, state: "$$playerStates.state" }},
+                { $project: { key: 0, _id: 0, __v: 0 } }]
+        }
     },
     { 
-        $addFields: { owner: { userId: "$ownerId" }, gameId: "$_id" } 
+        $addFields: { gameId: "$_id" } 
     },  
     { 
-        $project: { _id: 0, __v: 0, ownerId: 0} 
-    } 
+        $project: { _id: 0, __v: 0, playerStates: 0, players: { key: 0, __v: 0, _id: 0 }} 
+    }
 ];
 
 
@@ -40,23 +43,7 @@ function getLobbies() {
             "$match": { started: false }
         },
         ...lookups,
-        {
-            $lookup: {
-                from: "users",
-                let: { playerStates: "$playerStates", ownerId: "$owner.userId" },
-                as: "players",
-                pipeline: [
-                    { $match: { $expr: { $and: 
-                        [{ $in: [ "$_id",  "$$playerStates.playerId" ] },
-                        { $ne: [ "$_id", "$$ownerId" ] }]
-                    }}},
-                    { $addFields: { userId: "$_id" }},
-                    { $project: { key: 0, _id: 0, __v: 0 } }]
-            }
-        },
-        { 
-            $project: { playerStates: 0, started: 0, players: { key: 0, __v: 0, _id: 0 }} 
-        }
+       
     ];
 
     return Game.aggregate(agr)
@@ -70,17 +57,6 @@ function getById(id) {
             "$match": { _id: id }
         },
         ...lookups,
-        {
-            $lookup: {
-                from: "users",
-                let: { playerStates: "$playerStates" },
-                as: "playerStates.player",
-                pipeline: [
-                    { $match: { "$expr": { $in: [ "$_id",  "$$playerStates.playerId" ] }}},
-                    { $addFields: { userId: "$_id" }},
-                    { $project: { key: 0, _id: 0, __v: 0 } }]
-            }
-        }
     ];
 
     return Game.aggregate(agr)
@@ -106,9 +82,8 @@ function create(type, title, user) {
 
     return new Game({ type, title, ownerId: userId })
         .save()
-        .then(game => {
-            return join (game._id, user);
-        });
+        .then(game => 
+            join (game._id, user).then(() => getById(game._id)));
 }
 
 function remove(id) {
@@ -117,14 +92,21 @@ function remove(id) {
 
 function join (gameId, user) {
     return new PlayerState({ gameId, playerId: user.userId })
-        .save()
-        .then(() => getById(gameId));
+        .save();
 }
 
 function leave (gameId, user) {
     return PlayerState.deleteOne({ gameId, playerId: user.userId })
         .exec()
         .then(() => Game.deleteOne({_id: gameId, ownerId: user.userId }))
+}
+
+function start (gameId) {
+    return Game.findById(gameId)
+    .then(game => {
+        game.started = true;
+        return game.save();
+    })
 }
 
 module.exports = {
@@ -135,5 +117,6 @@ module.exports = {
     create,
     remove,
     join,
-    leave
+    leave,
+    start
 };

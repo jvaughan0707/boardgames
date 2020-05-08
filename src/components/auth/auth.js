@@ -36,9 +36,12 @@ class Auth extends Component {
 
   setUser(user) {
     if (user && user.displayName && user.userId && user.userKey) {
-      cookies.set('displayName', user.displayName, {path: '/', expires: new Date(Date.now()+2592000)});
-      cookies.set('userId', user.userId, {path: '/', expires: new Date(Date.now()+2592000)});
-      cookies.set('userKey', user.userKey, {path: '/', expires: new Date(Date.now()+2592000)});
+      var expiry = new Date();
+      expiry.setDate(99999);
+
+      cookies.set('displayName', user.displayName, {path: '/', expires: new Date(expiry)});
+      cookies.set('userId', user.userId, {path: '/', expires: new Date(expiry)});
+      cookies.set('userKey', user.userKey, {path: '/', expires: new Date(expiry)});
       this.setGlobal({ user });
       this.setState({userLoaded: true});
     }

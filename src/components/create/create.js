@@ -16,7 +16,7 @@ class Create extends Component {
 				<p>Select a game type below to create a lobby.</p>
 				{
 					games.map(game => {
-						return <button key={game.type} onClick={() => this.createLobby(game)} disabled={this.props.inLobby}>{game.title}</button>
+						return <button key={game.type} onClick={() => this.createLobby(game)} disabled={!this.props.allowCreate}>{game.title}</button>
 					})
 				}
 			</>

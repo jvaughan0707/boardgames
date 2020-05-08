@@ -51,8 +51,8 @@ class Home extends Component {
             this.state.loading ? <Loading/>:
             this.state.inGame ?  <Play/> :
             <>
-                <Create inLobby={this.state.inLobby}/>
-                <Lobbies inLobby={this.state.inLobby}/>
+                <Create allowCreate={!this.state.inLobby}/>
+                <Lobbies allowJoin={!this.state.inLobby}/>
             </>
 		);
 	}

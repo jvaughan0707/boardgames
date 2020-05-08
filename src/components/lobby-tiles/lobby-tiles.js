@@ -1,7 +1,7 @@
 import React from 'react';
 import { useGlobal } from 'reactn';
 
-const LobbyTiles = ({lobbies, inLobby}) => {
+const LobbyTiles = ({lobbies, allowJoin}) => {
 	const [ user ] = useGlobal('user');
 	const [ ws ] = useGlobal('webSocket');
     return ( 
@@ -34,31 +34,30 @@ const LobbyTiles = ({lobbies, inLobby}) => {
 
     function RenderTile (lobby, user) {
         var key = "game" + lobby.gameId
-        var isOwner = lobby.owner.userId === user.userId;
-        return isOwner ? 
+        var isOwner = lobby.ownerId === user.userId;
+        return (
         <tr key={key}>
-            <td>{lobby.owner.displayName}</td>
-            <td>{lobby.gameType}</td>
-            <td><button type="button" onClick={() => startGame(lobby.gameId)}>Start</button></td>
-            <td><button type="button" onClick={() => deleteGame(lobby.gameId)}>Cancel</button></td>
-        </tr> :
-        
-        <tr key={key}>
-            <td>{lobby.owner.displayName}</td>
-            <td>{lobby.gameType}</td>
+            <td>{lobby.title}</td>
             {
                 lobby.players.map(p => 
-                    <td key={"user" + p.userId}>{p.displayName}</td>
-                    )
+                    <td key={"user" + p.userId}>{p.displayName}</td>)
             }
-            <td>
+            {
+            isOwner ? 
+                <>
+                    <td><button type="button" onClick={() => startGame(lobby.gameId)}>Start</button></td>
+                    <td><button type="button" onClick={() => deleteGame(lobby.gameId)}>Cancel</button></td>
+                </> :
+
+                <td>
                 {
-                    inLobby && lobby.players.some(p => p.userId === user.userId) ?
+                    !allowJoin && lobby.players.some(p => p.userId === user.userId) ?
                     <button type="button" onClick={() => leaveLobby(lobby.gameId)}>Quit</button> :
-                    <button type="button" onClick={() => joinLobby(lobby.gameId)} disabled={inLobby}>Join</button>
+                    <button type="button" onClick={() => joinLobby(lobby.gameId)} disabled={!allowJoin}>Join</button>
                 }
-            </td>
-        </tr>
+                </td>
+            }
+        </tr>);
     }
 }
     

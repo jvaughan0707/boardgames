@@ -67,7 +67,7 @@ class Lobbies extends Component {
             <Loading/> :
             <div id="openLobbies" className="container">
                 <h2>Matching</h2>
-                <LobbyTiles lobbies={this.state.lobbies} inLobby={this.props.inLobby}></LobbyTiles>
+                <LobbyTiles lobbies={this.state.lobbies} allowJoin={this.props.allowJoin}></LobbyTiles>
             </div>
 		);
 	}

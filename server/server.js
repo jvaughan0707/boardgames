@@ -152,6 +152,11 @@ io.on('connection', (ws) => {
         cb(game);
       })
     );
+
+    ws.on('startGame', (gameId) => 
+      gameService.start(gameId)
+      .then(() => io.to(gameId).emit('gameStarted'))
+    );
   }
   var cookies = {};
 
