@@ -1,4 +1,4 @@
-import React, { Component, setGlobal } from 'reactn';
+import React, { Component } from 'reactn';
 import './App.css';
 import Header from '../header/header';
 import Routes from '../routes/routes';
@@ -10,16 +10,17 @@ class App extends Component {
     super();
     const	webSocket = io();
     webSocket.on('connect', () => {
-      setGlobal({ webSocket });
+      this.setGlobal({ webSocket });
     });
-    setGlobal({ user: null, webSocket: null });
+
+    this.setGlobal({ user: null, webSocket: null });
   }
 
   render () {
     return (
       <Auth>
-        <Header />
-        <Routes/> 
+          <Header />
+          <Routes/> 
       </Auth>
     );
   }

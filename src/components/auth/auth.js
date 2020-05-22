@@ -1,19 +1,19 @@
-import React from 'reactn';
-import Component from '../component'
+import React, {PureComponent} from 'reactn';
 import Cookies from 'universal-cookie';
 import Loading from '../loading/loading';
 
 const cookies = new Cookies();
 
-class Auth extends Component { 
+class Auth extends PureComponent { 
   
   constructor() {
     super ();
     var displayName = cookies.get('displayName');
     this.state = {userLoaded: !displayName, displayName };
+  
   }
 
-  handleChange = event => {
+  handleChange (event) {
     this.setState({ displayName: event.target.value });
   }
 
@@ -30,7 +30,10 @@ class Auth extends Component {
     const ws = this.global.webSocket;
     
     if (ws) {
-      ws.emit('getUser', user => this.setUser(user))
+      var userId = cookies.get("userId");
+      var userKey = cookies.get("userKey");
+      var user = { displayName: this.state.displayName, userId, userKey };
+      ws.emit('validateUser', user, u => this.setUser(u));
     }
   }
 
@@ -42,9 +45,10 @@ class Auth extends Component {
       cookies.set('displayName', user.displayName, {path: '/', expires: new Date(expiry)});
       cookies.set('userId', user.userId, {path: '/', expires: new Date(expiry)});
       cookies.set('userKey', user.userKey, {path: '/', expires: new Date(expiry)});
-      this.setGlobal({ user });
-      this.setState({userLoaded: true});
     }
+    
+    this.setGlobal({ user });
+    this.setState({userLoaded: true});
   }
 
   render () {
@@ -56,7 +60,7 @@ class Auth extends Component {
         !this.global.user ? 
         <div className="preAuth">
           <label>Name:</label>
-          <input type="text" onChange={ this.handleChange } name="displayName"></input>
+          <input type="text" onChange={ this.handleChange.bind(this) } name="displayName"></input>
           <button onClick={ this.createUser.bind(this) }>Go!</button>
         </div> :
         <div className="App">  

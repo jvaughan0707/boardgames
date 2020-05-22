@@ -1,5 +1,4 @@
-import React from 'reactn';
-import Component from '../component'
+import React, {Component} from 'reactn';
 import Create from '../create/create'
 import Play from '../play/play'
 import Lobbies from '../lobbies/lobbies'
@@ -8,51 +7,40 @@ import Loading from '../loading/loading';
 class Home extends Component {
     constructor() {
         super();
-        this.state = { loading: true, inGame: false, inLobby: false}
+        this.state = { loading: true, game: null}
     }
 
     componentDidMount() {
         const ws = this.global.webSocket;
-        ws.on('joinedLobby', this.onLobbyJoined.bind(this));
-        ws.on('leftLobby', this.onLobbyLeft.bind(this));
-        ws.on('gameStarted', this.onGameStarted.bind(this));
+        ws.on('gameStatusChanged', this.onGameStatusChanged.bind(this));
 
-        ws.emit('getUserGameStatus', game => {
+        ws.emit('getCurrentGame', game => {
             if (game) {
-                this.setState({ inGame: game.started, inLobby: true, loading: false });
+                this.setState({ game, loading: false });
             }
             else {
-                this.setState({ inGame: false, inLobby: false, loading: false });
+                this.setState({ game: null, loading: false });
             }
         });
     }
 
     componentWillUnmount() {
         const ws = this.global.webSocket;
-        ws.off('joinedLobby', this.onLobbyJoined.bind(this));
-        ws.off('leftLobby', this.onLobbyLeft.bind(this));
-        ws.off('gameStarted', this.onGameStarted.bind(this));
+        ws.off('gameStatusChanged', this.onGameStatusChanged.bind(this));
     }
 
-    onLobbyJoined () {
-        this.setState({ inLobby: true })
-    }
-
-    onLobbyLeft () {
-        this.setState({ inLobby: false })
-    }
-  
-    onGameStarted () {
-        this.setState({ inGame: true })
+    onGameStatusChanged (game) {
+        this.setState({game, loading: false});
     }
 
     render() {
+        var game = this.state.game;
         return (
             this.state.loading ? <Loading/>:
-            this.state.inGame ?  <Play/> :
+            (game && game.started) ?  <Play game={game}/> :
             <>
-                <Create allowCreate={!this.state.inLobby}/>
-                <Lobbies allowJoin={!this.state.inLobby}/>
+                <Create allowCreate={game === null}/>
+                <Lobbies allowJoin={game === null}/>
             </>
 		);
 	}

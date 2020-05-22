@@ -1,10 +1,13 @@
 .menu a {
     text-decoration: none;
-
+    color: white;
 }
 
 .menu {
-    width: 900px;
+    /* width: 900px; */
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 100px;
     background-color:gray;
     margin: auto;
 }

@@ -1,44 +1,43 @@
 const User = require('../models/user');
 
-function validate(user) {
-    var { displayName, userId, userKey } = user;
-    return new Promise((resolve, reject) => {
+class UserService {
+    validate(user, onSuccess, onError) {
+        var { displayName, userId, userKey } = user;
+        var self = this;
         if (displayName) {
             if (userId && userKey) {
                 User.findOne({ _id: userId}, function(err, result) {
                     if (err) {
-                        reject(err); 
+                        onError(err); 
                     }
                     else if ((result != null &&  result.key == userKey)) {
-                        resolve(user);
+                        onSuccess({ displayName, userId: result._id, userKey: result.key });
                     }        
                     else {
-                        resolve(create(displayName));
+                        self.create(displayName, onSuccess);
                     }
                 });
             }
             else {
-                resolve(create(displayName));
+                self.create(displayName, onSuccess);
             }
         }
         else {
-            reject("Display name is required");
+            onError("Display name is required");
         }
-    });
+    }
+
+    create (displayName, onSuccess) {
+        var key = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        const user = new User({ displayName, key });
+
+        user.save()
+        .then(result => 
+            onSuccess({ displayName, userId: result._id, userKey: result.key })
+        );
+    }
 }
 
-function create (displayName) {
-    var key = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    const user = new User({ displayName, key });
-
-    return user.save()
-     .then(result => {
-        const { _id } = result;
-        return { displayName, userId: _id, userKey: key };
-     });
-}
-
-module.exports = { 
-    validate,
-    create
+module.exports = {
+     UserService
 }

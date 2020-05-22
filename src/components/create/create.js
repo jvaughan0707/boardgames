@@ -1,5 +1,4 @@
-import React from 'reactn';
-import Component from '../component'
+import React, {Component} from 'reactn';
 
 const games = [{type: "skull", title: "Skull"}]
 

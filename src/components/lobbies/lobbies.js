@@ -1,5 +1,4 @@
-import React from 'reactn';
-import Component from '../component'
+import React, {Component} from 'reactn';
 import LobbyTiles from '../lobby-tiles/lobby-tiles'
 import Loading from '../loading/loading'
 
@@ -13,7 +12,6 @@ class Lobbies extends Component {
         const ws = this.global.webSocket;
         ws.on('lobbyCreated', this.onLobbyCreated.bind(this));
         ws.on('lobbyPlayerJoined', this.onLobbyPlayerJoined.bind(this));
-        ws.on('lobbyDeleted', this.onLobbyDeleted.bind(this));
         ws.on('lobbyPlayerLeft', this.onLobbyPlayerLeft.bind(this));
 
         ws.emit('getOpenLobbies', lobbies => this.setState({lobbies, loading: false}));
@@ -23,7 +21,6 @@ class Lobbies extends Component {
         const ws = this.global.webSocket;
         ws.off('lobbyCreated', this.onLobbyCreated.bind(this));
         ws.off('lobbyPlayerJoined', this.onLobbyPlayerJoined.bind(this));
-        ws.off('lobbyDeleted', this.onLobbyDeleted.bind(this));
         ws.off('lobbyPlayerLeft', this.onLobbyPlayerLeft.bind(this));
     }
 
@@ -31,12 +28,6 @@ class Lobbies extends Component {
         var lobbies = this.state.lobbies.concat(lobby);
         this.setState({ lobbies })
     }
-
-    onLobbyDeleted (gameId) {
-        var lobbies = this.state.lobbies.filter(g => g.gameId !== gameId);
-        this.setState({ lobbies })
-    }
-
   
     onLobbyPlayerJoined (user, gameId) {
         var lobbies = this.state.lobbies.map(lobby =>
@@ -49,19 +40,23 @@ class Lobbies extends Component {
         this.setState({ lobbies })
     }
 
-    onLobbyPlayerLeft (user, gameId) {
+    onLobbyPlayerLeft (userId, gameId, newOwnerId) {
         var lobbies = this.state.lobbies.map(lobby =>
         {
             if (lobby.gameId === gameId) {
-                lobby.players = lobby.players.filter(p => p.userId !== user.userId);
+                lobby.players = lobby.players.filter(p => p.userId !== userId);
+                if (newOwnerId) {
+                    lobby.ownerId = newOwnerId;
+                }
             }
+           
             return lobby;
         });
+        lobbies = lobbies.filter(l => l.players.length > 0);
         this.setState({ lobbies })
     }
 
 	render() {
-
 		return (
             this.state.loading ? 
             <Loading/> :

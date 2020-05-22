@@ -87,130 +87,104 @@ function onListening() {
  * Web sockets
  */
 const io = require('socket.io')(server);
+const GameService = require('./services/game-service').GameService;
+const UserService = require('./services/user-service').UserService;
 
-var gameService = require('./services/game-service');
-var userService = require('./services/user-service');
+const clients = new Map();
 
 io.on('connection', (ws) => {
-  var user = null;
-  var getUser;
+  ws.on('disconnect', function() {
+    clients.delete(ws);
+  });
 
-  function addListeners () {
+  function onUserValidated (user) {
+    delete user.userKey;
+    clients.set(ws, user);
+
+    var gameService = new GameService(user);
 
     ws.on('createLobby', ({type, title}, cb) => 
-      gameService.create(type, title, user)
-        .then(lobby=> {
-          io.emit('lobbyCreated', lobby);
-          ws.emit('joinedLobby');
-          ws.join(lobby.gameId);
-          cb && cb(lobby);
-        })
-    ); 
-
-    ws.on('deleteLobby', (id) => 
-      gameService.remove(id, user)
-      .then(() => { 
-        io.emit('lobbyDeleted', id);
-        io.to(id).emit('leftLobby');
+      gameService.create(type, title, lobby => {
+        io.emit('lobbyCreated', lobby);
+        ws.emit('gameUpdated', lobby);
+        ws.join(lobby.gameId);
+        cb && cb(lobby);
       })
-    );
+    ); 
 
     ws.on('joinLobby', (gameId) => {
       ws.join(gameId);
-      gameService.join(gameId, user)
-      .then(() => {
+      gameService.join(gameId, game => {
         io.emit('lobbyPlayerJoined', user, gameId );
-        ws.emit('joinedLobby');
+        ws.emit('gameStatusChanged', game);
       });
     });
 
     ws.on('leaveLobby', (gameId) => {
       ws.leave(gameId);
-      gameService.leave(gameId, user).then(() => {
-        io.emit('lobbyPlayerLeft', user, gameId );
-        ws.emit('leftLobby');
+      gameService.leave(gameId, (newOwnerId) => {
+        io.emit('lobbyPlayerLeft', user.userId, gameId, newOwnerId);
+        ws.emit('gameStatusChanged', null);
       });
     });
-    
+
+    ws.on('quitGame', (gameId) => {
+      ws.leave(gameId);
+      gameService.leave(gameId, () => {
+        io.to(gameId).emit('playerLeft', user.userId );
+        ws.emit('gameStatusChanged', null);
+      });
+    });
+
     ws.on('getOpenLobbies', (cb) =>
-      gameService.getLobbies()
-      .then(lobbies => { 
-        cb(lobbies);
-      })
+      gameService.getLobbies(cb)
     );
 
-    ws.on('getUserGameStatus', (cb) =>
-      gameService.getUserGameStatus(user.userId)
-        .then(result => { 
-          cb(result);
-        })
-    );
-
-    ws.on('getCurrentGame', (cb) =>
-      gameService.getCurrentGame(user.userId)
-      .then(game => { 
+    ws.on('getCurrentGame', (cb) => 
+      gameService.getCurrentGame(game => {
+        if (game) {
+          ws.join(game.gameId);
+        }
         cb(game);
       })
     );
 
     ws.on('startGame', (gameId) => 
-      gameService.start(gameId)
-      .then(() => io.to(gameId).emit('gameStarted'))
+      gameService.start(gameId, game => 
+        io.to(gameId).emit('gameStatusChanged', game)
+      )
+    );
+
+    ws.on('gameAction', (gameId, type, data) => 
+      gameService.validateAction(id, type, data, () => {
+        io.sockets.clients(gameId).foreach(client => {
+          var userId = clients.get(client).userId;
+          io.to(userId).emit('gameAction', type, data, user.userId, gameService.maskForUser(game, userId))
+        });
+      })
     );
   }
-  var cookies = {};
 
-  ws.request.headers.cookie && 
-  ws.request.headers.cookie.split(';').forEach(function(cookie) {
-    var parts = cookie.split('=');
-    cookies[parts.shift().trim()] = decodeURI(parts.join('='));
-  });
-  var { displayName, userId, userKey } = cookies;
+  var userService = new UserService();
 
-  if (displayName) {
-    getUser = userService
-      .validate({ displayName, userId, userKey })
-      .then((result) => { 
-        addListeners();
-        user = {displayName, userId: result.userId};
-        return result;
+  ws.on('validateUser', (user, cb) => {
+    if (clients.get(ws)) {
+      cb(clients.get(ws));
+    }
+    else {
+      userService.validate(user, result => { 
+        cb(result);
+        onUserValidated(result);
       })
-  }
-  
-
-  ws.on('getUser', (cb) => {
-    if (getUser) {
-      getUser.then(u => cb(u));
-    }
-    else {
-      cb(null);
     }
   });
-
+  
   ws.on('createUser', (displayName, cb) => {
-    if (user || getUser) {
-      //throw
-    }
-    else {
-       getUser = userService.create(displayName)
-        .then((result) => { 
-          addListeners();
-          user = result;
-          cb(result);
-          return result;
+    if (!clients.get(ws)) {
+       userService.create(displayName, result => { 
+          cb(result);         
+          onUserValidated(result);
         });
     }
   });
-       
-
-  // if (getResult) {
-  //   getResult.then(result => messageSender({ 
-  //     success: true,
-  //     info : result,
-  //     requestId : data.requestId }))
-  //   .catch(err => messageSender({ 
-  //     success: false,
-  //     info : {err},
-  //     requestId : data.requestId }));
-  // }
 });

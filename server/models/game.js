@@ -7,8 +7,11 @@ const schema = new mongoose.Schema({
 		type: mongoose.Schema.ObjectId,
         ref: 'User', 
         required: true},
-    state: String,
-    settings: String
+    state: { 
+        public: Object,
+        internal: Object
+    },
+    settings: Object
 })
 
 const Game = mongoose.model('Game', schema);

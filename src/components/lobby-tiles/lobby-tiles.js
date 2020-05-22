@@ -1,7 +1,7 @@
 import React from 'react';
 import { useGlobal } from 'reactn';
 
-const LobbyTiles = ({lobbies, allowJoin}) => {
+export default function LobbyTiles ({lobbies, allowJoin}) {
 	const [ user ] = useGlobal('user');
 	const [ ws ] = useGlobal('webSocket');
     return ( 
@@ -15,10 +15,6 @@ const LobbyTiles = ({lobbies, allowJoin}) => {
         </table> :
         <p>No open lobbies. Create one by going to the Create tab!</p>)
        )
-
-    function deleteGame (id) {
-        ws.emit('deleteLobby', id);
-    }
 
     function joinLobby (id) {
         ws.emit('joinLobby', id);
@@ -46,13 +42,13 @@ const LobbyTiles = ({lobbies, allowJoin}) => {
             isOwner ? 
                 <>
                     <td><button type="button" onClick={() => startGame(lobby.gameId)}>Start</button></td>
-                    <td><button type="button" onClick={() => deleteGame(lobby.gameId)}>Cancel</button></td>
+                    <td><button type="button" onClick={() => leaveLobby(lobby.gameId)}>Leave</button></td>
                 </> :
 
                 <td>
                 {
                     !allowJoin && lobby.players.some(p => p.userId === user.userId) ?
-                    <button type="button" onClick={() => leaveLobby(lobby.gameId)}>Quit</button> :
+                    <button type="button" onClick={() => leaveLobby(lobby.gameId)}>Leave</button> :
                     <button type="button" onClick={() => joinLobby(lobby.gameId)} disabled={!allowJoin}>Join</button>
                 }
                 </td>
@@ -60,5 +56,3 @@ const LobbyTiles = ({lobbies, allowJoin}) => {
         </tr>);
     }
 }
-    
-export default LobbyTiles

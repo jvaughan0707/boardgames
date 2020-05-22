@@ -8,8 +8,9 @@ const schema = new mongoose.Schema({
 		type: mongoose.Schema.ObjectId,
         ref: 'Game', 
         required: true},
-    public: String,
-    private: String
+    public: Object,
+    private: Object,
+    internal: Object
 })
 
 const PlayerState = mongoose.model('PlayerState', schema);
