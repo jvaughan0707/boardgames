@@ -15,7 +15,7 @@ class Play extends Component {
 	leaveGame () {
 		//prompt are you sure?
 		const ws = this.global.webSocket;
-        ws.emit('quitGame', this.props.game.gameId);
+        ws.emit('leaveGame', this.props.game.gameId);
 	}
 
 	render () {

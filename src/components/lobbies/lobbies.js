@@ -11,6 +11,7 @@ class Lobbies extends Component {
     componentDidMount() {
         const ws = this.global.webSocket;
         ws.on('lobbyCreated', this.onLobbyCreated.bind(this));
+        ws.on('lobbyDeleted', this.onLobbyDeleted.bind(this));
         ws.on('lobbyPlayerJoined', this.onLobbyPlayerJoined.bind(this));
         ws.on('lobbyPlayerLeft', this.onLobbyPlayerLeft.bind(this));
 
@@ -22,10 +23,17 @@ class Lobbies extends Component {
         ws.off('lobbyCreated', this.onLobbyCreated.bind(this));
         ws.off('lobbyPlayerJoined', this.onLobbyPlayerJoined.bind(this));
         ws.off('lobbyPlayerLeft', this.onLobbyPlayerLeft.bind(this));
+        ws.off('lobbyDeleted', this.onLobbyDeleted.bind(this));
     }
 
     onLobbyCreated (lobby) {
         var lobbies = this.state.lobbies.concat(lobby);
+        this.setState({ lobbies })
+    }
+
+    onLobbyDeleted (gameId) {
+        var lobbies = this.state.lobbies.filter(l => l.gameId !== gameId);
+
         this.setState({ lobbies })
     }
   

@@ -9,7 +9,7 @@ export default function LobbyTiles ({lobbies, allowJoin}) {
         <table>
             <tbody>
                 {
-                    lobbies.map(lobby => RenderTile(lobby, user)) 
+                    lobbies.map(lobby => RenderTile(lobby)) 
                 }
              </tbody>
         </table> :
@@ -21,14 +21,14 @@ export default function LobbyTiles ({lobbies, allowJoin}) {
     }
 
     function leaveLobby (id) {
-        ws.emit('leaveLobby', id);
+        ws.emit('leaveGame', id);
     }
 
     function startGame (id) {
         ws.emit('startGame', id);
     }
 
-    function RenderTile (lobby, user) {
+    function RenderTile (lobby) {
         var key = "game" + lobby.gameId
         var isOwner = lobby.ownerId === user.userId;
         return (

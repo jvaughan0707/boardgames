@@ -87,104 +87,45 @@ function onListening() {
  * Web sockets
  */
 const io = require('socket.io')(server);
-const GameService = require('./services/game-service').GameService;
-const UserService = require('./services/user-service').UserService;
-
-const clients = new Map();
+const GameService = require('./services/game-service');
+const UserService = require('./services/user-service');
+require('./mongo').connect();
 
 io.on('connection', (ws) => {
-  ws.on('disconnect', function() {
-    clients.delete(ws);
+  var cookies = {};
+  ws.request.headers.cookie && 
+  ws.request.headers.cookie.split(';').forEach(function(cookie) {
+    var parts = cookie.split('=');
+    cookies[parts.shift().trim()] = decodeURI(parts.join('='));
   });
+  var { displayName, userId, userKey } = cookies;
 
-  function onUserValidated (user) {
-    delete user.userKey;
-    clients.set(ws, user);
-
-    var gameService = new GameService(user);
-
-    ws.on('createLobby', ({type, title}, cb) => 
-      gameService.create(type, title, lobby => {
-        io.emit('lobbyCreated', lobby);
-        ws.emit('gameUpdated', lobby);
-        ws.join(lobby.gameId);
-        cb && cb(lobby);
-      })
-    ); 
-
-    ws.on('joinLobby', (gameId) => {
-      ws.join(gameId);
-      gameService.join(gameId, game => {
-        io.emit('lobbyPlayerJoined', user, gameId );
-        ws.emit('gameStatusChanged', game);
-      });
-    });
-
-    ws.on('leaveLobby', (gameId) => {
-      ws.leave(gameId);
-      gameService.leave(gameId, (newOwnerId) => {
-        io.emit('lobbyPlayerLeft', user.userId, gameId, newOwnerId);
-        ws.emit('gameStatusChanged', null);
-      });
-    });
-
-    ws.on('quitGame', (gameId) => {
-      ws.leave(gameId);
-      gameService.leave(gameId, () => {
-        io.to(gameId).emit('playerLeft', user.userId );
-        ws.emit('gameStatusChanged', null);
-      });
-    });
-
-    ws.on('getOpenLobbies', (cb) =>
-      gameService.getLobbies(cb)
-    );
-
-    ws.on('getCurrentGame', (cb) => 
-      gameService.getCurrentGame(game => {
-        if (game) {
-          ws.join(game.gameId);
-        }
-        cb(game);
-      })
-    );
-
-    ws.on('startGame', (gameId) => 
-      gameService.start(gameId, game => 
-        io.to(gameId).emit('gameStatusChanged', game)
-      )
-    );
-
-    ws.on('gameAction', (gameId, type, data) => 
-      gameService.validateAction(id, type, data, () => {
-        io.sockets.clients(gameId).foreach(client => {
-          var userId = clients.get(client).userId;
-          io.to(userId).emit('gameAction', type, data, user.userId, gameService.maskForUser(game, userId))
-        });
-      })
-    );
+  if (!displayName) {
+    ws.disconnect();
   }
+  else {
+    var userService = new UserService();
+    userService.validate(displayName, userId, userKey)
+    .then(user =>{
+      ws.join(user.userId);
 
-  var userService = new UserService();
-
-  ws.on('validateUser', (user, cb) => {
-    if (clients.get(ws)) {
-      cb(clients.get(ws));
-    }
-    else {
-      userService.validate(user, result => { 
-        cb(result);
-        onUserValidated(result);
-      })
-    }
-  });
+      ws.emit('userValidated', user);
+      delete user.userKey;
+      var gameService = new GameService(user, io, ws);
   
-  ws.on('createUser', (displayName, cb) => {
-    if (!clients.get(ws)) {
-       userService.create(displayName, result => { 
-          cb(result);         
-          onUserValidated(result);
-        });
-    }
-  });
+      ws.on('createLobby', gameService.create);
+  
+      ws.on('joinLobby', gameService.join);
+  
+      ws.on('leaveGame', gameService.leave);
+  
+      ws.on('getOpenLobbies', gameService.getLobbies);
+  
+      ws.on('getCurrentGame', gameService.getCurrentGame);
+  
+      ws.on('startGame', gameService.start);
+  
+      ws.on('gameAction', gameService.validateAction);
+    })
+  }
 });

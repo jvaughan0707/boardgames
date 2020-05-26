@@ -5,20 +5,17 @@ import { useGlobal } from 'reactn';
 
 const Header = () => {
 	const [ user ] = useGlobal('user');
+	const [ ws ] = useGlobal('webSocket');
 	return (
 			<div id="Header">
-        		<h1>Welcome {user.displayName}!</h1> 
-				<div className="menu">
-					<NavLink exact to="/">
+					{/* <NavLink exact to="/">
 						Play
-					</NavLink>
-					<NavLink exact to="/contribute" >
-						Contribute
-					</NavLink>
-					<NavLink exact to="/settings" >
+					</NavLink> */}
+					{/* <NavLink exact to="/settings" >
 						Settings
-					</NavLink>
-				</div>
+					</NavLink> */}
+        
+        <h2 id="displayName" style={{color: ws.connected ? 'white': 'red'}}>Welcome {user.displayName}!</h2> 
 			</div>
 		);
 }

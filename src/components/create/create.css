@@ -1,0 +1,16 @@
+.game-tile, .game-tile img {
+  width: 100px;
+}
+
+.game-tile h3 {
+  margin: 0;
+  text-align: center;
+}
+
+.game-tile {
+  border: 1px solid grey;
+}
+
+.game-tile:enabled {
+  cursor: pointer;
+}

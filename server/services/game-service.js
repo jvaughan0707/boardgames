@@ -1,321 +1,349 @@
 const Game = require('../models/game');
 const PlayerState = require('../models/player-state');
+const SkullService = require('./skull-service');
 const ReadPreference = require('mongodb').ReadPreference;
-const mongoose = require('mongoose');
-const ObjectId = mongoose.Types.ObjectId;
-require('../mongo').connect();
+const ObjectId = require('mongoose').Types.ObjectId;
+const _ = require('lodash');
 
-class GameService {
-    constructor(user) {
-        this.user = user;
-        this.currentGameAggregation = [
-            { 
-                $match: {
-                    playerId: this.user.userId
+function GameService(user, io, ws) {
+  var self = this;
+  var currentGameAggregation = [
+    {
+      $match: {
+        playerId: ObjectId(user.userId)
+      }
+    },
+    {
+      $lookup: {
+        from: "games",
+        localField: "gameId",
+        foreignField: "_id",
+        as: "game"
+      }
+    },
+    {
+      $unwind: "$game"
+    },
+    {
+      $replaceRoot: { newRoot: "$game" }
+    }
+  ];
+  var gameDetailAggregation = [
+    {
+      $lookup: {
+        from: "playerstates",
+        let: { gameId: "$_id", ownerId: "$ownerId" },
+        as: "players",
+        pipeline:
+          [
+            {
+              $match: {
+                $expr: {
+                  $eq: ["$gameId", "$$gameId"]
                 }
+              }
             },
+            { $sort: { order: 1 } },
             {
-                $lookup: {
-                    from: "games",
-                    localField: "gameId",
-                    foreignField: "_id",
-                    as: "game"
-                }
-            },
-            {
-                $unwind: "$game"
-            },
-            { 
-                $replaceRoot: { newRoot: "$game" } 
-            }
-        ];
-        this.gameDetailAggregation = [
-            {
-                $lookup: {
-                    from: "playerstates",
-                    let: { gameId: "$_id", ownerId: "$ownerId" },
-                    as: "players",
-                    pipeline: 
-                    [
-                        { 
-                            $match: { 
-                                $expr: { 
-                                    $eq: [ "$gameId",  "$$gameId" ] 
-                                }
-                            }
-                        },
-                        {
-                            $lookup: {
-                                from: "users",
-                                let: { userId: "$playerId" },
-                                as: "player",
-                                pipeline: 
-                                [
-                                    { 
-                                        $match: { 
-                                            $expr: { 
-                                                $eq: [ "$_id",  "$$userId" ] 
-                                            }
-                                        }
-                                    }
-                                ]
-                            }
-                        },
-                        {
-                            $unwind: "$player"
-                        },
-                        { 
-                            $project: { 
-                                _id: 0,
-                                userId: "$player._id", 
-                                displayName: "$player.displayName",
-                                state: {
-                                    public: "$public",
-                                    private: "$private"
-                                }
-                            }
-                        },
-                    ]
-                }
-            },            
-            { 
-                $addFields: { gameId: "$_id" } 
-            },  
-            { 
-                $project: { _id: 0, __v: 0 } 
-            }
-        ];
-
-        this.stateMaskAggregation = [
-            {
-                $project: {
-                    state: {
-                        internal: 0
-                    }
-                }
-            },
-            {
-                $addFields: {
-                    players: {
-                        $map: {
-                            input: "$players",
-                            as: "player",
-                            in: {
-                                userId: "$$player.userId",
-                                displayName: "$$player.displayName",
-                                x: "$$player.state",
-                                state: {
-                                    $cond: [
-                                        {$eq: ["$$player.userId", this.user.userId]}, 
-                                        {
-                                            $mergeObjects: ["$$player.state.public", "$$player.state.private"]
-                                        }, 
-                                        "$$player.state.public"
-                                    ]
-                                }
-                            }
+              $lookup: {
+                from: "users",
+                let: { userId: "$playerId" },
+                as: "player",
+                pipeline:
+                  [
+                    {
+                      $match: {
+                        $expr: {
+                          $eq: ["$_id", "$$userId"]
                         }
+                      }
                     }
-                }
-              
-            }
-        ];
-    }
-
-    getLobbies(onSuccess) {
-        var agr = [
-            {
-                "$match": { started: false }
+                  ]
+              }
             },
-            ...this.gameDetailAggregation,
-        ];
-
-        return Game.aggregate(agr)
-            .read(ReadPreference.NEAREST)
-            .exec()
-            .then(onSuccess);
+            {
+              $unwind: "$player"
+            },
+            {
+              $project: {
+                _id: 0,
+                userId: { "$toString": "$player._id" },
+                displayName: "$player.displayName",
+                active: "$active",
+                order: "$order",
+                state: {
+                  public: "$public",
+                  private: "$private"
+                }
+              }
+            },
+          ]
+      }
+    },
+    {
+      $addFields: { gameId: { "$toString": "$_id" }, ownerId: { "$toString": "$ownerId" }, }
+    },
+    {
+      $project: { _id: 0, __v: 0 }
     }
+  ];
 
-    getById(id, maskState, onSuccess) {
-        if (typeof id === 'string') {
-            id = ObjectId(id);
+  var stateMaskAggregation = [
+    {
+      $addFields: {
+        state: "$state.public",
+        players: {
+          $map: {
+            input: "$players",
+            as: "player",
+            in: {
+              userId: "$$player.userId",
+              displayName: "$$player.displayName",
+              active: "$$player.active",
+              order: "$$player.order",
+              state: {
+                $cond: [
+                  { $eq: ["$$player.userId", user.userId] },
+                  {
+                    $mergeObjects: ["$$player.state.public", "$$player.state.private"]
+                  },
+                  "$$player.state.public"
+                ]
+              }
+            }
+          }
         }
-        var agr = [
-            {
-                "$match": { _id: id }
-            },
-            ...this.gameDetailAggregation,
-            ...(maskState ? this.stateMaskAggregation: [])
-        ];
+      }
 
-        Game.aggregate(agr)
-            .read(ReadPreference.NEAREST)
-            .exec()
-            .then(games => onSuccess(games && games.length > 0 ? games[0] : null));
+    },
+    {
+      $project: {
+        state: {
+          internal: 0,
+          public: 0
+        }
+      }
+    }
+  ];
+
+  this.getLobbies = function (cb) {
+    var agr = [
+      {
+        "$match": { started: false }
+      },
+      ...gameDetailAggregation,
+    ];
+
+    return Game.aggregate(agr)
+      .read(ReadPreference.NEAREST)
+      .exec()
+      .then(cb);
+  }
+
+  var getById = function (id, maskState) {
+    if (typeof id === 'string') {
+      id = ObjectId(id);
+    }
+    var agr = [
+      {
+        "$match": { _id: id }
+      },
+      ...gameDetailAggregation,
+      ...(maskState ? stateMaskAggregation : [])
+    ];
+
+    return Game.aggregate(agr)
+      .read(ReadPreference.NEAREST)
+      .exec()
+      .then(games => games && games.length > 0 ? games[0] : null);
+  }
+
+  this.getCurrentGame = function (cb) {
+    return PlayerState.aggregate([
+      ...currentGameAggregation,
+      ...gameDetailAggregation,
+      ...stateMaskAggregation
+    ])
+      .read(ReadPreference.NEAREST)
+      .exec()
+      .then(games => {
+        if (games.length > 0) {
+          var game = games[0];
+          ws.join(game.gameId);
+          cb(game);
+        }
+        else {
+          cb(null);
+        }
+      });
+  }
+
+  this.create = function (type) {
+    var ownerId = ObjectId(user.userId);
+    switch (type) {
+      case 'skull':
+        var game = SkullService.createGame(ownerId);
+        break;
+      default:
+        return;
     }
 
-    getCurrentGame (onSuccess) {
-        return PlayerState.aggregate([
-            ...this.currentGameAggregation,
-            ...this.gameDetailAggregation,
-            ...this.stateMaskAggregation
-        ])
-        .read(ReadPreference.NEAREST)
-        .exec()
-        .then(games => 
-            games.length > 0 ? games[0] : null)
-        .then(onSuccess);
-    }
+    game.save()
+      .then(doc => {
+        io.emit('lobbyCreated', { gameId: doc._id.toString(), type, title: doc.title, ownerId, players: [] });
+        self.join(doc._id);
+      });
+  }
 
-    create(type, title, onSuccess) { 
-        new Game({ type, title, ownerId: this.user.userId })
-        .save()
-        .then(doc => 
-            this.join(doc._id, onSuccess)
-        );
-    }
-
-    join(gameId, onSuccess) {
-        this.getById(gameId, true, game => {
-            if (!game.started && !game.players.some(p => p.userId.equals(this.user.userId))) {
-                new PlayerState({ gameId, playerId: this.user.userId })
-                .save()
-                .then(() => {
-                    game.players.push(this.user);
-                    onSuccess(game);
-                });
-            }
-        });
-    }
-
-    leave(gameId, onSuccess) {
-        PlayerState.deleteOne({ gameId, playerId: this.user.userId }, () => {
-            this.getById(gameId, false, game => {
-                if (game.players.length > 0) {
-                    if (game.ownerId.equals(this.user.userId)) {
-                        var newOwnerId = game.players[0].userId;
-                        Game.updateOne(
-                            {_id: gameId},
-                            { ownerId: newOwnerId },
-                            () =>  onSuccess(newOwnerId)
-                        );
-                    }
-                    onSuccess(null);
-                }
-                else {
-                    Game.deleteOne({_id: gameId })
-                    .then(() => onSuccess(null));
-                }
+  this.join = function (gameId) {
+    getById(gameId, true)
+      .then(game => {
+        if (game && !game.started && !game.players.some(p => p.userId == user.userId)) {
+          return new PlayerState({ gameId, playerId: ObjectId(user.userId), active: true })
+            .save()
+            .then(() => {
+              game.players.push(user);
+              ws.join(game.gameId);
+              io.emit('lobbyPlayerJoined', user, gameId);
+              io.to(user.userId).emit('gameStatusChanged', game);
             });
-        });
-    }
+        }
+      });
+  }
 
-    start(gameId, onSuccess) {
-        Game.findById(gameId)
+  this.leave = function (gameId) {
+    ws.leave(gameId);
+    io.to(user.userId).emit('gameStatusChanged', null)
+    PlayerState.deleteOne({ gameId, playerId: user.userId }, () => {
+      getById(gameId, false)
         .then(game => {
-            game.started = true;
-
-            switch (game.type) {
-                case 'skull': 
-                    const cards = [{ skull: false }, { skull: false }, { skull: false }, { skull: true }]
-                    game.state = { currentTurnPlayer: 0, playingPhase: true };
-                    return game.save()
-                        .then(() => PlayerState.find({gameId}).exec())
-                        .then(playerStates => {
-                            for (let i = playerStates.length - 1; i > 0; i--) {
-                                const j = Math.floor(Math.random() * (i + 1));
-                                [playerStates[i], playerStates[j]] = [playerStates[j], playerStates[i]];
-                            }
-                            return Promise.all(playerStates.map((ps, index) => {
-                                ps.public = { score: 0, cards: [{},{},{},{}], playedCards: [], currentBet: 0, passed: false, turnOrder: index };
-                                ps.private = { cards, playedCards: [] };
-                                return ps.save();
-                            }));
-                        });
-                default:
-                    break;
-            }
-        })
-        .then(() => this.getById(gameId, true, onSuccess));
-    }
-
-    validateAction(gameId, type, data, onSuccess) {
-        this.getById(gameId, false, game => {
-            var currentPlayer = game.players.find(p => p.userId.equals(this.user.userId));
-            var playerPublic = currentPlayer.state.public;
-            var playerPrivate = currentPlayer.state.private;
-            var gamePublic = game.state.public;
-            if (!currentPlayer) {
-                return;
-            }
-            switch (game.type) {
-                case "skull":
-                    if (playerPublic.turnOrder !== gamePublic.currentTurnPlayer) {
-                        return;
-                    }
-                    switch (type) {
-                        case "cardPlayed":
-                            if (!gamePublic.playingPhase) {
-                                return 
-                            }
-
-                            var cardIndex = data;
-                            var card = playerPrivate.cards[cardIndex];
-
-                            if (!card) {
-                                return;
-                            }
-
-                            playerPrivate.cards.splice(cardIndex, 1);
-                            playerPrivate.playedCards.push(card);
-
-                            playerPublic.cards.splice(cardIndex, 1);
-                            playerPublic.playedCards.push({});
-
-                            gamePublic.currentTurnPlayer++;
-                            gamePublic.currentTurnPlayer %= game.players.length;
-
-                            PlayerState.update({playerId: this.user.userId, gameId },
-                                {
-                                    playerPrivate,
-                                    playerPublic 
-                                },
-                                () => 
-                                Game.update({_id: gameId},
-                                    {state: game.state },
-                                    () => onSuccess(game)))
-
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-            
-                default:
-                    break;
-            }
-           
-
-        })
-    }
-
-    maskForUser(game, userId) {
-        delete game.state.internal;
-
-        game.players.forEach(player => {
-            if (!player.userId.equals(userId)) {
-                delete player.state.private;
+          if (game) {
+            if (game.players.length > 0) {
+              if (game.ownerId == user.userId) {
+                game.ownerId = game.players[0].userId;
+                Game.updateOne(
+                  { _id: gameId },
+                  { ownerId: game.ownerId }
+                );
+              }
+              if (game.started) {
+                io.to(gameId).emit('playerQuit', user.userId);
+              }
+              else {
+                io.emit('lobbyPlayerLeft', user.userId, gameId, game.ownerId);
+              }
             }
             else {
-                player.state = {
-                    ...player.state.public,
-                    ...player.state.private
-                }
+              Game.deleteOne({ _id: gameId })
+                .then(() => io.emit('lobbyDeleted', gameId));
             }
+          }
         });
-    }
+    });
+  }
+
+  this.start = function (gameId) {
+    getById(gameId, false)
+      .then(game => {
+        if (!game) {
+          return;
+        }
+
+        game.started = true;
+
+        for (let i = game.players.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [game.players[i], game.players[j]] = [game.players[j], game.players[i]];
+        }
+
+        switch (game.type) {
+          case 'skull':
+            SkullService.initializeGame(game);
+            break;
+          default:
+            break;
+        }
+        Game.updateOne(
+          { _id: gameId },
+          {
+            state: game.state,
+            started: true
+          },
+          () =>
+            game.players.forEach((player, index) => {
+              player.order = index;
+              PlayerState.updateOne(
+                { playerId: player.userId, gameId },
+                { private: player.state.private, public: player.state.public, order: index },
+                () =>
+                  io.to(player.userId).emit('gameStatusChanged', maskForUser(_.cloneDeep(game), player.userId))
+              )
+            })
+        )
+      });
+  }
+
+  this.validateAction = function (gameId, type, data, onError) {
+    getById(gameId, false)
+      .then(game => {
+        if (!game) {
+          return;
+        }
+        var currentPlayer = game.players.find(p => p.userId == user.userId);
+
+        if (!currentPlayer) {
+          onError('You are not in this game');
+          return;
+        }
+        if (!currentPlayer.active) {
+          onError('You are not currently ative in this game')
+          return;
+        }
+
+        var onSuccess = outputData => PlayerState.updateOne(
+          { playerId: user.userId, gameId },
+          { private: currentPlayer.state.private, public: currentPlayer.state.public },
+          () =>
+            Game.updateOne(
+              { _id: gameId },
+              { state: game.state },
+              () =>
+                game.players.forEach(player =>
+                  io.to(player.userId).emit('gameAction', type, outputData, user.userId, maskForUser(_.cloneDeep(game), player.userId))
+                )
+            )
+        );
+
+        onError = onError ?? (() => null);
+
+        switch (game.type) {
+          case "skull":
+            SkullService.validateAction(currentPlayer, game, type, data, onSuccess, onError);
+            break;
+          default:
+            return;
+        }
+      })
+  }
+
+  var maskForUser = function (game, userId) {
+    delete game.state.internal;
+    game.state = game.state.public;
+
+    game.players.forEach(player => {
+      if (!player.userId == userId) {
+        delete player.state.private;
+        player.state = player.state.public;
+      }
+      else {
+        player.state = {
+          ...player.state.public,
+          ...player.state.private
+        }
+      }
+    });
+    return game;
+  }
 }
 
-module.exports = {
-    GameService
-}
+module.exports = GameService;
