@@ -9,9 +9,7 @@ class Auth extends PureComponent {
     super();
     var displayName = cookies.get('displayName');
     this.state = { userValidated: false, displayName };
-    if (displayName) {
-      this.connect();
-    }
+    this.connect();
   }
 
   handleChange(event) {
@@ -20,7 +18,9 @@ class Auth extends PureComponent {
 
   createUser() {
     this.setCookie('displayName', this.state.displayName);
-    this.connect();
+    var user = this.global.user;
+    user.displayName = this.state.displayName;
+    this.setGlobal({ user });
   }
 
   connect() {
@@ -33,15 +33,14 @@ class Auth extends PureComponent {
       this.setGlobal({ webSocket })
     );
 
-
     webSocket.on('userValidated', this.onUserValidated.bind(this));
   }
 
   onUserValidated(user) {
-    this.setCookie('displayName', user.displayName);
     this.setCookie('userId', user.userId);
     this.setCookie('userKey', user.userKey);
 
+    user.displayName = this.state.displayName;
     this.setGlobal({ user });
     this.setState({ userValidated: true });
   }
@@ -55,20 +54,19 @@ class Auth extends PureComponent {
 
   render() {
     return (
-      this.state.displayName ?
-        (this.state.userValidated ?
+      this.state.userValidated ?
+        (this.global.user && this.global.user.displayName ?
           <div className="App">
             {this.props.children}
           </div> :
-          <Loading />) :
-        <div className="preAuth">
-          <label>Name:</label>
-          <input type="text" onChange={this.handleChange.bind(this)} name="displayName"></input>
-          <button onClick={this.createUser.bind(this)}>Go!</button>
-        </div>
-    )
+          <div className="preAuth">
+            <label>Name:</label>
+            <input type="text" onChange={this.handleChange.bind(this)} name="displayName"></input>
+            <button onClick={this.createUser.bind(this)}>Go!</button>
+          </div>
+        ) :
+        <Loading />)
   }
-
 }
 
 

@@ -1,5 +1,4 @@
 import React, { Component } from 'reactn';
-import Create from '../create/create'
 import Play from '../play/play'
 import Lobbies from '../lobbies/lobbies'
 import Loading from '../loading/loading';
@@ -12,31 +11,34 @@ class Home extends Component {
 
   componentDidMount() {
     const ws = this.global.webSocket;
-    ws.on('gameStatusChanged', this.onGameStatusChanged.bind(this));
+    ws.on('gameStarted', this.onGameStarted.bind(this));
+    ws.on('gameEnded', this.onGameEnded.bind(this));
 
-    ws.emit('getCurrentGame', game => 
-        this.setState({ game, loading: false })
+    ws.emit('getCurrentGame', game =>
+      this.setState({ game, loading: false })
     );
   }
 
   componentWillUnmount() {
     const ws = this.global.webSocket;
-    ws.off('gameStatusChanged', this.onGameStatusChanged.bind(this));
+    ws.off('gameStarted', this.onGameStarted.bind(this));
+    ws.off('gameEnded', this.onGameEnded.bind(this));
   }
 
-  onGameStatusChanged(game) {
+  onGameStarted(game) {
     this.setState({ game, loading: false });
+  }
+
+  onGameEnded() {
+    this.setState({ game: null })
   }
 
   render() {
     var game = this.state.game;
     return (
       this.state.loading ? <Loading /> :
-        (game && game.started) ? <Play game={game} /> :
-          <>
-            <Create allowCreate={game === null} />
-            <Lobbies allowJoin={game === null} />
-          </>
+        game ? <Play game={game} /> :
+          <Lobbies allowJoin={game === null} />
     );
   }
 }

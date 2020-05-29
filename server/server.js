@@ -92,40 +92,36 @@ const UserService = require('./services/user-service');
 require('./mongo').connect();
 
 io.on('connection', (ws) => {
-  var cookies = {};
-  ws.request.headers.cookie && 
-  ws.request.headers.cookie.split(';').forEach(function(cookie) {
-    var parts = cookie.split('=');
-    cookies[parts.shift().trim()] = decodeURI(parts.join('='));
-  });
-  var { displayName, userId, userKey } = cookies;
+  ws.on('getOpenLobbies', GameService.getLobbies);
 
-  if (!displayName) {
-    ws.disconnect();
-  }
-  else {
-    var userService = new UserService();
-    userService.validate(displayName, userId, userKey)
-    .then(user =>{
+  var cookies = {};
+  ws.request.headers.cookie &&
+    ws.request.headers.cookie.split(';').forEach(function (cookie) {
+      var parts = cookie.split('=');
+      cookies[parts.shift().trim()] = decodeURI(parts.join('='));
+    });
+  var { userId, userKey } = cookies;
+
+  var userService = new UserService();
+  userService.validate(userId, userKey)
+    .then(user => {
       ws.join(user.userId);
 
       ws.emit('userValidated', user);
-      delete user.userKey;
-      var gameService = new GameService(user, io, ws);
-  
+      var gameService = new GameService(user.userId, io);
+
       ws.on('createLobby', gameService.create);
-  
+
       ws.on('joinLobby', gameService.join);
-  
-      ws.on('leaveGame', gameService.leave);
-  
-      ws.on('getOpenLobbies', gameService.getLobbies);
-  
+
+      ws.on('leaveLobby', gameService.leaveLobby);
+      
+      ws.on('quit', gameService.quit);
+
       ws.on('getCurrentGame', gameService.getCurrentGame);
-  
+
       ws.on('startGame', gameService.start);
-  
+
       ws.on('gameAction', gameService.validateAction);
     })
-  }
 });

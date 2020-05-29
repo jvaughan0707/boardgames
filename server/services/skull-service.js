@@ -1,24 +1,26 @@
-const Game = require('../models/game');
+const Lobby = require('../models/lobby');
 
 class SkullService {
-  static createGame (ownerId) {
-    return new Game({ type:'skull', title:'Skull', ownerId, settings: { minPlayers: 2, maxPlayers: 6} })
+  static createLobby() {
+    return new Lobby({ type: 'skull', title: 'Skull', minPlayers: 2, maxPlayers: 6, players: [] })
   }
 
   static initializeGame(game) {
+    const colours = ["beige", "blue", "red", "pink", "green", "purple"];
+
     game.state = { public: { currentTurnPlayer: 0, phase: "playing" }, internal: {} };
-    
-    game.players.forEach(p => {
+
+    game.players.forEach((p, i) => {
       var skullIndex = Math.floor(Math.random() * 4);
       var blankCards = [{}, {}, {}, {}]
       var cards = blankCards.map((x, i) => ({ skull: i == skullIndex }));
-      p.state.public = { score: 0, hand: blankCards, playedCards: [], revealedCards: [], currentBet: 0, passed: false };
+      p.state.public = { score: 0, colour: colours[i], hand: blankCards, playedCards: [], revealedCards: [], currentBet: 0, passed: false };
       p.state.private = { allCards: cards, hand: cards, playedCards: [] };
     });
   }
 
   static validateAction(currentPlayer, game, type, data, onSuccess, onError) {
-    if (currentPlayer.order !== game.state.public.currentTurnPlayer) {
+    if (currentPlayer.__index !== game.state.public.currentTurnPlayer) {
       onError('Its not your turn');
       return;
     }
@@ -69,6 +71,7 @@ class SkullService {
         currentPlayer.state.public.playedCards.push({});
 
         onSuccess(data);
+        return;
       case "bet":
         if (game.state.public.phase === "playing") {
           if (currentPlayer.state.public.playedCards.length > 0) {
@@ -107,6 +110,7 @@ class SkullService {
         currentPlayer.state.public.currentBet = bet;
 
         onSuccess(bet);
+        return;
       case "pass":
         if (game.state.public.phase !== "betting") {
           onError('Cannot pass at this time');
@@ -128,12 +132,12 @@ class SkullService {
         if (remainingPlayersCount == 2) {
           game.state.public.phase = "revealing";
         }
-        
-        setNextTurnPlayer(p => !p.state.public.passed);
-        onSuccess();
 
+        setNextTurnPlayer(p => !p.state.public.passed);
         currentPlayer.state.public.passed = true;
-        break;
+        
+        onSuccess();
+        return;
       case "revealCard":
         if (game.state.public.phase !== "revealing") {
           onError('Cannot reveal at this time');
@@ -194,8 +198,9 @@ class SkullService {
         }
 
         onSuccess({ userId, card });
+        return;
       default:
-        break;
+        return;
     }
   }
 }

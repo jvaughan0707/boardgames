@@ -2,8 +2,6 @@ import React, { Component } from 'reactn';
 import './skull.css';
 const images = require.context('../../resources/skull', true);
 
-const colours = ["beige", "blue", "red", "pink", "green", "purple"];
-
 class Skull extends Component {
   constructor(props) {
     super(props);
@@ -56,12 +54,12 @@ class Skull extends Component {
 
   user = this.global.user;
 
-  getPlayerTile(player) {
-    var playerIsCurrentUser = player.userId === this.user.userId;
-    var colour = colours[player.order];
+  getPlayerTile(player, currentTurn, playerIsCurrentUser) {
+    var colour = player.state.colour;
     var baseImg = images('./' + colour + '_base.png');
-    var currentTurn = this.state.game.state.currentTurnPlayer === player.order;
     var playingPhase = this.state.game.state.phase === "playing";
+    var bettingPhase = this.state.game.state.phase === "betting";
+    var revealingPhase = this.state.game.state.phase === "revealing";
 
     return (
       <div key={player.userId}>
@@ -72,7 +70,7 @@ class Skull extends Component {
         <div style={{ display: 'flex' }}>
           {
             player.state.hand.map((card, index) =>
-              this.getCard(card, colour, index, playerIsCurrentUser, playerIsCurrentUser && currentTurn ? () => this.playCard(index) : null))
+              this.getCard(card, colour, index, playerIsCurrentUser, playingPhase && playerIsCurrentUser && currentTurn ? () => this.playCard(index) : null))
           }
         </div>
         <p>Played Cards: </p>
@@ -95,11 +93,12 @@ class Skull extends Component {
             <p>Controls:</p>
             <div>
               <input type="number" min={this.state.minBet} max={this.state.maxBet} value={this.state.betAmount} onChange={this.onBetAmountChange.bind(this)}></input>
-              <button onClick={() => this.placeBet(this.state.betAmount)} disabled={!currentTurn || player.state.playedCards.length === 0}>
+              <button onClick={() => this.placeBet(this.state.betAmount)} disabled={!currentTurn || player.state.playedCards.length === 0 || !(playingPhase || bettingPhase)}>
                 {playingPhase ? 'Start Betting' : 'Raise Bet'}
               </button>
-              <button disabled={!currentTurn}
-                onClick={this.pass.bind(this)}>Pass</button>
+              <button disabled={!currentTurn || !bettingPhase}
+                onClick={this.pass.bind(this)}>Pass
+              </button>
             </div>
           </>
         }
@@ -144,19 +143,23 @@ class Skull extends Component {
     ws.emit("gameAction", this.state.game.gameId, "pass", error => console.log(error));
   }
 
-  revealCard (userId) {
+  revealCard(userId) {
     var ws = this.global.webSocket;
     ws.emit("gameAction", this.state.game.gameId, "pass", error => console.log(error));
   }
 
   render() {
+    var currentTurnPlayer = this.state.game.players[this.state.game.state.currentTurnPlayer];
+    var userIndex = this.state.game.players.findIndex(p => p.userId === this.global.user.userId);
+    var userPlayer = this.state.game.players[userIndex];
+
+    var players = [...this.state.game.players.slice(userIndex), ...this.state.game.players.slice(0, userIndex)]
     return (
       <>
-        <p>Now playing skull</p>
         <p>Current phase: {this.state.game.state.phase}</p>
         <p>Players</p>
         {
-          this.state.game.players.map(p => this.getPlayerTile(p))
+          players.map((p, i) => this.getPlayerTile(p, p === currentTurnPlayer, p === userPlayer))
         }
       </>
     )

@@ -4,15 +4,14 @@ const skullImg = require('../../resources/skull/title.png');
 const games = [{ type: "skull", title: "Skull", img: skullImg }]
 
 class Create extends Component {
-  createLobby = (info) => {
+  createLobby = (type) => {
     const ws = this.global.webSocket;
-    ws.emit('createLobby', info);
+    ws.emit('createLobby', type, this.global.user.displayName);
   }
 
   render() {
     return (
       <>
-        <h2>Create</h2>
         <p>Select a game type below to create a lobby.</p>
         {
           games.map(game => {
