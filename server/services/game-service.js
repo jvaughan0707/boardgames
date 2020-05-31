@@ -149,7 +149,7 @@ class GameService {
     }
 
     this.start = lobbyId => {
-      Lobby.findById(lobbyId)
+      Lobby.findOneAndDelete({ _id: lobbyId })
         .read(ReadPreference.NEAREST)
         .exec()
         .then(lobby => {
@@ -161,7 +161,7 @@ class GameService {
             return;
           }
 
-          var game = new Game({type: lobby.type, title: lobby.title, players: lobby.players, state: { public: {}, internal: {}}})
+          var game = new Game({ type: lobby.type, title: lobby.title, players: lobby.players, state: { public: {}, internal: {} } })
 
           // Shuffle the player order
           for (let i = game.players.length - 1; i > 0; i--) {

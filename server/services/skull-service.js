@@ -8,32 +8,33 @@ class SkullService {
   static initializeGame(game) {
     const colours = ["beige", "blue", "red", "pink", "green", "purple"];
 
-    game.state = { public: { currentTurnPlayer: 0, phase: "playing" }, internal: {} };
+    game.state = { public: { phase: "playing" }, internal: {} };
 
     game.players.forEach((p, i) => {
       var skullIndex = Math.floor(Math.random() * 4);
       var blankCards = [{}, {}, {}, {}]
       var cards = blankCards.map((x, i) => ({ skull: i == skullIndex }));
-      p.state.public = { score: 0, colour: colours[i], hand: blankCards, playedCards: [], revealedCards: [], currentBet: 0, passed: false };
+      p.state.public = { currentTurn: i == 0, score: 0, colour: colours[i], hand: blankCards, playedCards: [], revealedCards: [], currentBet: 0, passed: false };
       p.state.private = { allCards: cards, hand: cards, playedCards: [] };
     });
   }
 
   static validateAction(currentPlayer, game, type, data, onSuccess, onError) {
-    if (currentPlayer.__index !== game.state.public.currentTurnPlayer) {
+    if (!currentPlayer.state.public.currentTurn) {
       onError('Its not your turn');
       return;
     }
 
     var setNextTurnPlayer = () => {
+      currentPlayer.state.public.currentTurn = false;
       for (var i = 0; i < game.players.length; i++) {
-        var turn = game.state.public.currentTurnPlayer
+        var turn = currentPlayer.__index;
         turn++;
         turn %= game.players.length;
         let player = game.players[turn];
 
         if (player.active && !player.passed) {
-          game.state.public.currentTurnPlayer = turn;
+          player.state.public.currentTurn = true;
           return;
         }
       }
@@ -46,10 +47,11 @@ class SkullService {
         player.state.public = { ...player.state.public, hand: blankCards, playedCards: [], revealedCards: [], currentBet: 0, passed: false };
         player.state.private = { hand: cards, playedCards: [] };
       });
+      game.state.public.phase = "playing";
     }
 
     switch (type) {
-      case "cardPlayed":
+      case "playCard":
         if (game.state.public.phase !== "playing") {
           onError('You cannot play cards at this time')
           return;
@@ -70,7 +72,7 @@ class SkullService {
         currentPlayer.state.public.hand.splice(cardIndex, 1);
         currentPlayer.state.public.playedCards.push({});
 
-        onSuccess(data);
+        onSuccess();
         return;
       case "bet":
         if (game.state.public.phase === "playing") {
@@ -109,7 +111,7 @@ class SkullService {
         setNextTurnPlayer(p => !p.state.public.passed);
         currentPlayer.state.public.currentBet = bet;
 
-        onSuccess(bet);
+        onSuccess();
         return;
       case "pass":
         if (game.state.public.phase !== "betting") {
@@ -151,7 +153,7 @@ class SkullService {
 
         var userId = data;
 
-        if (!user.userId == userId) {
+        if (currentPlayer.userId !== userId) {
           if (currentPlayer.state.public.playedCards.length > 0) {
             onError('You must reveal all of your own cards first');
             return;
