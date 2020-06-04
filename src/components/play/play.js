@@ -6,7 +6,7 @@ class Play extends Component {
   getGameComponent(game) {
     switch (game.type.toLowerCase()) {
       case 'skull':
-        return <Skull game={game} />
+        return <Skull game={game} animate={true}/>
       default:
         break;
     }
@@ -22,7 +22,7 @@ class Play extends Component {
     var game = this.props.game;
     return (
       <>
-        <button onClick={this.quit.bind(this)}>Quit</button>
+        {/* <button onClick={this.quit.bind(this)}>Quit</button> */}
         {this.getGameComponent(game)}
       </>
     )

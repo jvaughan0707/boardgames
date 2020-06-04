@@ -7,7 +7,7 @@ const cookies = new Cookies();
 class Auth extends PureComponent {
   constructor() {
     super();
-    var displayName = cookies.get('displayName');
+    var displayName = cookies.get('displayName') || '';
     this.state = { userValidated: false, displayName };
     this.connect();
   }
@@ -61,8 +61,8 @@ class Auth extends PureComponent {
           </div> :
           <div className="preAuth">
             <label>Name:</label>
-            <input type="text" onChange={this.handleChange.bind(this)} name="displayName"></input>
-            <button onClick={this.createUser.bind(this)}>Go!</button>
+            <input maxLength="15" type="text" onChange={this.handleChange.bind(this)} name="displayName"></input>
+            <button onClick={this.createUser.bind(this)} disabled={this.state.displayName.length === 0}>Go!</button>
           </div>
         ) :
         <Loading />)

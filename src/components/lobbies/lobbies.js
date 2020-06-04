@@ -80,7 +80,8 @@ class Lobbies extends Component {
         <>
           <h2>Create</h2>
           <Create allowCreate={!this.state.inLobby} />
-          <h2>Matching</h2>
+          <hr/>
+          <h2>Join</h2>
           <LobbyTiles lobbies={this.state.lobbies} allowJoin={!this.state.inLobby}></LobbyTiles>
         </>
     );

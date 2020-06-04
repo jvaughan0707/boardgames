@@ -1,5 +1,7 @@
 import React from 'react';
+import './lobby-tiles.css';
 import { useGlobal } from 'reactn';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 export default function LobbyTiles({ lobbies, allowJoin }) {
   const [user] = useGlobal('user');
@@ -7,13 +9,7 @@ export default function LobbyTiles({ lobbies, allowJoin }) {
   lobbies = lobbies.filter(lobby => lobby.players.length > 0);
   return (
     (lobbies.length > 0 ?
-      <table>
-        <tbody>
-          {
-            lobbies.map(lobby => RenderTile(lobby))
-          }
-        </tbody>
-      </table> :
+      lobbies.map(lobby => RenderTile(lobby)) :
       <p>No open lobbies.</p>)
   )
 
@@ -32,28 +28,37 @@ export default function LobbyTiles({ lobbies, allowJoin }) {
   function RenderTile(lobby) {
     var key = "game" + lobby.lobbyId
     var isOwner = lobby.players[0].userId === user.userId;
-    return (
-      <tr key={key}>
-        <td>{lobby.title}</td>
-        {
-          lobby.players.map(p =>
-            <td key={"user" + p.userId}>{p.displayName}</td>)
-        }
-        {
-          isOwner ?
-            <>
-              <td><button type="button" onClick={() => startGame(lobby.lobbyId)}>Start</button></td>
-              <td><button type="button" onClick={() => leaveLobby(lobby.lobbyId)}>Leave</button></td>
-            </> :
 
-            <td>
-              {
-                !allowJoin && lobby.players.some(p => p.userId === user.userId) ?
-                  <button type="button" onClick={() => leaveLobby(lobby.lobbyId)}>Leave</button> :
-                  <button type="button" onClick={() => joinLobby(lobby.lobbyId)} disabled={!allowJoin}>Join</button>
-              }
-            </td>
-        }
-      </tr>);
+    return (
+      <div key={key} className='lobby-tile'>
+        <h4>{lobby.title}</h4>
+        <div className="lobby-players">
+          {
+            new Array(lobby.maxPlayers).fill(null)
+              .map((x, i) => {
+                let p = lobby.players[i];
+                return p ?
+                  (<div key={i} className="lobby-player">
+                    {p.displayName}&nbsp;
+                    {p.userId === user.userId && <FontAwesomeIcon icon="user" />}
+                  </div>) :
+                  (<div key={i} className="lobby-space"></div>)
+                })
+          }
+        </div>
+        <div className="lobby-controls">
+          {
+            isOwner ?
+              <>
+                <button type="button" onClick={() => startGame(lobby.lobbyId)} disabled={lobby.players.length < lobby.minPlayers}>Start</button>
+                <button type="button" onClick={() => leaveLobby(lobby.lobbyId)}>Leave</button>
+              </> :
+
+              !allowJoin && lobby.players.some(p => p.userId === user.userId) ?
+                <button type="button" onClick={() => leaveLobby(lobby.lobbyId)}>Leave</button> :
+                <button type="button" onClick={() => joinLobby(lobby.lobbyId)} disabled={!allowJoin || lobby.players.length >= lobby.maxPlayers}>Join</button>
+          }
+        </div>
+      </div>);
   }
 }

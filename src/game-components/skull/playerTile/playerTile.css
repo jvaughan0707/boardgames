@@ -1,25 +1,92 @@
+.player-tile {
+  width: 40%;
+  padding-top: 11%;
+  border: 1px solid grey;
+  border-radius: 10px;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.player-tile.primary {
+  width: 40%;
+  padding-top: 21%;
+}
+
+@media only screen and (max-width: 600px) {
+  .player-tile {
+    position: relative;
+    transform: none !important;
+    width: 100% !important;
+    padding-top: 25%;
+  }
+
+  .player-tile.primary {
+    padding-top: 50%;
+  }
+}
+
+.player-tile-inner {
+  perspective: 350px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.player-tile h3 {
+  margin: 5px;
+  float: right;
+  font-size: min(1.5vw, 13px);
+}
+
+.controls {
+  margin-right: 10px;
+}
+
+.controls * {
+  font-size: 16px;
+  margin: 10px;
+}
+
+.controls input {
+  width: 35px;
+  height: 20px;
+}
+
+.controls button {
+  width: 50px;
+}
+
 .card {
-  width: 100px;
-  height: 100px;
+  width: 23%;
+  padding-top: 23%;
   perspective: 500px;
-  position: relative;
+  position: absolute;
   border-radius: 50px;
+}
+
+.card.animated, .card.animated .card-inner {
+  transition: transform 1s, z-index 0s 1s;
 }
 
 .card * {
   border-radius: 50px;
 }
 .card img {
-  width: 100px;
-  height: 100px;
-  border: 1px solid rgb(100, 100, 100);
+  width: 100%;
+  height: auto;
 }
 
 .card-inner {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
   width: 100%;
   height: 100%;
-  transition: transform 0.6s;
   transform-style: preserve-3d;
 }
 
@@ -39,21 +106,9 @@
   transform: rotateY(180deg);
 }
 
-.card-stack-horizontal, .card-stack-vertical {
-  margin-left: 10px;
-}
-
-.card-stack-vertical .card:not(:first-child) {
-  margin-top: -115px;
-}
-
-.card-stack-horizontal .card:not(:first-child) {
-  margin-left: -50px;
-}
-
 .base-card {
-  width: 120px;
-  height: 120px;
+  width: 25%;
+  height: auto;
   position: absolute;
+  transform: translate(150%, 15%) rotateX(45deg);
 }
-

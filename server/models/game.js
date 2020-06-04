@@ -18,7 +18,8 @@ const schema = new mongoose.Schema({
       },
       active: Boolean
     }
-  ]
+  ],
+  finsihed: Boolean
 })
 
 const Game = mongoose.model('Game', schema);

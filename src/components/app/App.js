@@ -3,6 +3,10 @@ import './App.css';
 import Header from '../header/header';
 import Routes from '../routes/routes';
 import Auth from '../auth/auth';
+import { library } from '@fortawesome/fontawesome-svg-core'
+import { faStar, faUser } from '@fortawesome/free-solid-svg-icons'
+
+library.add(faStar, faUser)
 
 class App extends Component {
   constructor() {

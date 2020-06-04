@@ -16,3 +16,4 @@ yarn-error.log*
 
 /server/environment/environment.js
 /.vscode
+.env

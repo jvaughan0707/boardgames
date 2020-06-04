@@ -3,21 +3,18 @@ import './playerTile.css';
 const images = require.context('../../../resources/skull', true);
 
 class PlayerTile extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { betAmount: props.minBet }
-  }
-
-  getCard(card, colour, cardIndex, faceUp, click) {
+  renderCard(card) {
     var frontCard = null;
-    if (card.skull !== undefined) {
-      frontCard = card.skull ?
-        images('./' + colour + '_skull.png') :
-        images('./' + colour + '_flower.png')
+    if (card.value === 'skull') {
+      frontCard = images('./' + card.colour + '_skull.png');
+    } else if (card.value === 'flower') {
+      frontCard = images('./' + card.colour + '_flower.png');
     }
-    var backCard = images('./' + colour + '_back.png');
+    var backCard = images('./' + card.colour + '_back.png');
+    var className = `card ${card.faceUp ? '' : 'flipped'} ${card.click ? 'clickable' : ''}  ${this.props.animate ? 'animated' : ''}`;
     return (
-      <div key={cardIndex} onClick={click} className={`card ${faceUp ? '' : 'flipped'}`}>
+      <div key={card.id} onClick={card.click} className={className}
+        style={card.style}>
         <div className='card-inner'>
           {frontCard &&
             <div className="card-front">
@@ -32,61 +29,48 @@ class PlayerTile extends Component {
     )
   }
 
-  onBetAmountChange(event) {
-    this.setState({ betAmount: event.target.value });
-  }
-
   render() {
     var game = this.props.game;
-    var player = game.players[this.props.playerIndex];
+    var player = this.props.player;
+    var user = this.props.user;
     var colour = player.state.colour;
     var baseImg = images('./' + colour + '_base.png');
     var playingPhase = game.state.phase === "playing";
-    var bettingPhase = game.state.phase === "betting";
     var revealingPhase = game.state.phase === "revealing";
-
     return (
-      <div>
-        <h3>{player.displayName}{player.state.currentTurn && "*"}</h3>
-        <div style={{ height: '120px' }}>
+      <div className={`player-tile ${this.props.playerIsUser ? 'primary' : ''}`} style={this.props.style}>
+        <div className="player-tile-inner">
+          <h3>{player.displayName}</h3>
+          {/* {player.state.currentTurn && "*"} | Current Bet: {player.state.currentBet} | Current Score: {player.state.score} */}
           <img src={baseImg} alt="base" className="base-card"></img>
-          <div className="card-stack-vertical">
-            {
-              player.state.playedCards.map((card, index) =>
-                this.getCard({}, colour, index, false, revealingPhase ? () => this.props.sendMove("revealCard", player.userId) : null))
-            }
-          </div>
-        </div>
-        <p>Current Bet: {player.state.currentBet}</p>
-        <p>Hand: </p>
-        <div style={{ display: 'flex' }} className={this.props.playerIsUser ? '' : 'card-stack-horizontal'}>
           {
-            player.state.hand.map((card, index) =>
-              this.getCard(card, colour, index, this.props.playerIsUser, playingPhase && this.props.playerIsUser && player.state.currentTurn ? () => this.props.sendMove("playCard", index) : null))
-          }
+            //Needs to be one JSX expression so that CSS animations work
+            [
+              ...player.state.hand.map((card, index) => ({
+                ...card,
+                colour,
+                faceUp: this.props.playerIsUser,
+                click: playingPhase && this.props.playerIsUser && player.state.currentTurn ? () => this.props.sendMove("playCard", card.id) : null,
+                style: { transform: this.props.playerIsUser ? `translate(${10 + index * 105}%, 120%)` : `translate(${10 + index * 15}%, 10%)`, zIndex: 12 - index }
+              })),
+              ...player.state.playedCards.map((card, index) => ({
+                ...card,
+                colour,
+                faceUp: false,
+                click: revealingPhase && user.state.currentTurn && (this.props.playerIsUser || user.state.playedCards.length === 0) ? () => this.props.sendMove("revealCard", player.userId) : null,
+                style: { transform: `translate(168%, ${17 - index * 15}%) rotateX(45deg)`, zIndex: 5 + index, filter: 'drop-shadow(0px 5px 0px #222)' }
+              })),
+              ...player.state.revealedCards.map((card, index) => ({
+                ...card,
+                colour,
+                faceUp: true,
+                click: null,
+                style: { transform: `translate(${280 + index * 15}%, 10%)`, zIndex: index }
+              }))
+            ].sort((a, b) => a.id - b.id)
+              .map(card => this.renderCard(card))
+          }          
         </div>
-        <p>Revealed Cards: </p>
-        <div style={{ display: 'flex' }}>
-          {
-            player.state.revealedCards.map((card, index) =>
-              this.getCard(card, colour, index, true))
-          }
-        </div>
-        {
-          this.props.playerIsUser &&
-          <>
-            <p>Controls:</p>
-            <div>
-              <input type="number" min={this.props.minBet} max={this.props.maxBet} value={this.state.betAmount} onChange={this.onBetAmountChange.bind(this)}></input>
-              <button onClick={() => this.props.sendMove("bet", this.state.betAmount)} disabled={!player.state.currentTurn || player.state.playedCards.length === 0 || !(playingPhase || bettingPhase)}>
-                {playingPhase ? 'Start Betting' : 'Raise Bet'}
-              </button>
-              <button disabled={!player.state.currentTurn || !bettingPhase}
-                onClick={() => this.props.sendMove("pass", null)}>Pass
-                </button>
-            </div>
-          </>
-        }
       </div>
     );
   }

@@ -1,7 +1,6 @@
 const Game = require('../models/game');
 const Lobby = require('../models/lobby');
 const SkullService = require('./skull-service');
-const ReadPreference = require('mongodb').ReadPreference;
 const _ = require('lodash');
 
 class GameService {
@@ -15,7 +14,6 @@ class GameService {
           { _id: 0, _v: 0 }
       }
     ])
-      .read(ReadPreference.NEAREST)
       .exec()
       .then(cb);
   }
@@ -23,7 +21,6 @@ class GameService {
   constructor(userId, io) {
     var getById = function (id) {
       return Game.findById(id)
-        .read(ReadPreference.NEAREST)
         .exec();
     }
     var getLobbyObject = function (doc) {
@@ -34,9 +31,8 @@ class GameService {
       return lobby;
     }
 
-    var getGameObject = function (doc, playerId) {
-      let game = doc.toObject();
-      game.gameId = doc.id;
+    var maskGameObject = function (game, playerId) {
+      game.gameId = game._id;
       delete game._id;
       delete game.__v;
 
@@ -45,7 +41,7 @@ class GameService {
 
       game.players.forEach(player => {
         delete player.state.internal;
-        if (!player.userId == playerId) {
+        if (player.userId !== playerId) {
           delete player.state.private;
           player.state = player.state.public;
         }
@@ -60,12 +56,11 @@ class GameService {
     }
 
     this.getCurrentGame = cb => {
-      return Game.findOne({ players: { $elemMatch: { userId, active: true } } })
-        .read(ReadPreference.NEAREST)
+      return Game.findOne({ players: { $elemMatch: { userId } } })
         .exec()
         .then(game => {
           if (game) {
-            cb(getGameObject(game, userId));
+            cb(maskGameObject(game.toObject(), userId));
           }
           else {
             cb(null);
@@ -74,55 +69,78 @@ class GameService {
     }
 
     this.create = (type, displayName) => {
-      if (!displayName) {
-        return;
+      if (!displayName || displayName.length > 15) {
+        throw 'Invalid display name';
       }
 
-      switch (type) {
-        case 'skull':
-          var lobby = SkullService.createLobby();
-          break;
-        default:
-          return;
-      }
-
-      lobby.save()
+      Lobby.findOne({ players: { $elemMatch: { userId } } })
+        .exec()
+        .then(lobby => {
+          if (lobby) {
+            throw 'Already in a lobby';
+          }
+        })
         .then(() => {
+          switch (type) {
+            case 'skull':
+              var lobby = SkullService.createLobby();
+              break;
+            default:
+              throw 'Invalid type';
+          }
+
+          return lobby.save();
+        })
+        .then(lobby => {
           io.emit('lobbyCreated', getLobbyObject(lobby));
           this.join(lobby.id, displayName);
-        });
+        })
+        .catch(reason => {
+
+        })
     }
 
     this.join = (lobbyId, displayName) => {
-      if (!displayName) {
-        return;
+      if (!displayName || displayName.length > 15) {
+        throw 'Invalid display name';
       }
 
-      Lobby.findById(lobbyId)
-        .read(ReadPreference.NEAREST)
+      Lobby.findOne({ players: { $elemMatch: { userId } } })
         .exec()
         .then(lobby => {
-          if (lobby && !lobby.players.some(p => p.userId == userId) && lobby.players.length < lobby.maxPlayers) {
+          if (lobby) {
+            throw 'Already in a lobby';
+          }
+        })
+        .then(() => Lobby.findById(lobbyId).exec())
+        .then(lobby => {
+          if (lobby && lobby.players.length < lobby.maxPlayers) {
             var user = { userId, displayName }
             lobby.players.push(user);
-            lobby.save()
+            return lobby.save()
               .then(() => {
                 io.emit('lobbyPlayerJoined', user, lobbyId);
-              });
+              })
           }
+          else {
+            throw 'Unable to join lobby'
+          }
+        })
+
+        .catch(reason => {
+
         });
     }
 
     this.leaveLobby = lobbyId => {
       Lobby.findById(lobbyId)
-        .read(ReadPreference.NEAREST)
         .exec()
         .then(lobby => {
           if (lobby) {
             lobby.players = lobby.players.filter(p => p.userId != userId);
             if (lobby.players.length > 0) {
               io.emit('lobbyPlayerLeft', userId, lobbyId);
-              game.save();
+              lobby.save();
             }
             else {
               Lobby.deleteOne({ _id: lobbyId })
@@ -135,22 +153,26 @@ class GameService {
     this.quit = gameId => {
       io.to(userId).emit('gameEnded')
       Game.findById(gameId)
-        .read(ReadPreference.NEAREST)
         .exec()
         .then(game => {
           if (game) {
-            game.players.forEach(player => {
-              io.to(player.userId).emit('playerQuit', userId);
-            })
-            game.players.find(p => p.userId == userId).active = false;
-            game.save();
+            game.players = game.players.filter(p => p.userId !== userId);
+            if (game.players.length > 0) {
+              game.players.forEach(player => {
+                io.to(player.userId).emit('playerQuit', userId);
+              })
+              SkullService.onPlayerQuit(game, userId);
+              game.save();
+            }
+            else {
+              Game.deleteOne({ _id: gameId });
+            }
           }
         });
     }
 
     this.start = lobbyId => {
       Lobby.findOneAndDelete({ _id: lobbyId })
-        .read(ReadPreference.NEAREST)
         .exec()
         .then(lobby => {
           if (!lobby) {
@@ -161,13 +183,9 @@ class GameService {
             return;
           }
 
-          var game = new Game({ type: lobby.type, title: lobby.title, players: lobby.players, state: { public: {}, internal: {} } })
+          var game = new Game({ type: lobby.type, title: lobby.title, players: lobby.players, state: { public: {}, internal: {} }, finished: false })
 
-          // Shuffle the player order
-          for (let i = game.players.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [game.players[i], game.players[j]] = [game.players[j], game.players[i]];
-          }
+          game.players = _.shuffle(game.players);
 
           game.players.forEach(player => {
             player.active = true;
@@ -184,7 +202,7 @@ class GameService {
           game.save()
             .then(() =>
               game.players.forEach(player => {
-                io.to(player.userId).emit('gameStarted', getGameObject(game, player.userId));
+                io.to(player.userId).emit('gameStarted', maskGameObject(game.toObject(), player.userId));
               })
             );
         });
@@ -208,13 +226,22 @@ class GameService {
             return;
           }
 
-          var onSuccess = outputData => {
+          var onSuccess = stateChain => {
+            stateChain = stateChain || [];
             game.markModified("state");
             game.markModified("players");
             game.save()
               .then(() =>
                 game.players.forEach(player => {
-                  io.to(player.userId).emit('gameAction', type, outputData, userId, getGameObject(game, player.userId))
+                  var output = stateChain.map(x =>
+                    ({
+                      game: maskGameObject(_.cloneDeep(x.game), player.userId),
+                      animate: x.animate
+                    })
+                  );
+                  io.to(player.userId).emit(
+                    'gameAction',
+                    output);
                 })
               );
           }

@@ -1,4 +1,6 @@
 const Lobby = require('../models/lobby');
+const _ = require('lodash');
+const phases = { playing: 'playing', betting: 'betting', revealing: 'revealing'};
 
 class SkullService {
   static createLobby() {
@@ -8,15 +10,20 @@ class SkullService {
   static initializeGame(game) {
     const colours = ["beige", "blue", "red", "pink", "green", "purple"];
 
-    game.state = { public: { phase: "playing" }, internal: {} };
+    game.state = { public: { phase: phases.playing }, internal: {} };
 
     game.players.forEach((p, i) => {
       var skullIndex = Math.floor(Math.random() * 4);
-      var blankCards = [{}, {}, {}, {}]
-      var cards = blankCards.map((x, i) => ({ skull: i == skullIndex }));
-      p.state.public = { currentTurn: i == 0, score: 0, colour: colours[i], hand: blankCards, playedCards: [], revealedCards: [], currentBet: 0, passed: false };
-      p.state.private = { allCards: cards, hand: cards, playedCards: [] };
+      var cards = new Array(4).fill(null).map((x, i) => ({ id: i, value: i == skullIndex ? 'skull' : 'flower' }));
+      var publicCards = cards.map(c => ({ id: c.id }));
+      p.state.public = { currentTurn: i == 0, score: 0, colour: colours[i], hand: publicCards, playedCards: [], revealedCards: [], currentBet: 0, passed: false };
+      p.state.private = { hand: cards };
+      p.state.internal = { playedCards: [] }
     });
+  }
+
+  static onPlayerQuit(game, userId) {
+
   }
 
   static validateAction(currentPlayer, game, type, data, onSuccess, onError) {
@@ -24,6 +31,7 @@ class SkullService {
       onError('Its not your turn');
       return;
     }
+    var stateChain = [];
 
     var setNextTurnPlayer = () => {
       currentPlayer.state.public.currentTurn = false;
@@ -40,51 +48,88 @@ class SkullService {
       }
     }
 
+    var addCheckpoint = (animate) => stateChain.push({ game: game.toObject(), animate})
+
     var reset = () => {
       game.players.forEach(player => {
-        let cards = player.state.private.allCards;
-        let blankCards = cards.map(c => ({}));
-        player.state.public = { ...player.state.public, hand: blankCards, playedCards: [], revealedCards: [], currentBet: 0, passed: false };
-        player.state.private = { hand: cards, playedCards: [] };
+        if (player.active) {
+
+          // Revealed cards will stay revealed temporarily until they have moved back to the players hand
+          var publicHand = [
+            ...player.state.public.hand,
+            ...player.state.public.playedCards,
+            ...player.state.public.revealedCards
+          ];
+
+          var privateHand = [
+            ...player.state.private.hand,
+            ...player.state.internal.playedCards,
+            ...player.state.public.revealedCards
+          ];
+
+          player.state.public = { ...player.state.public, hand: publicHand, playedCards: [], revealedCards: [], currentBet: 0, passed: false };
+          player.state.internal.playedCards = [];
+          player.state.private.hand = privateHand;
+        }
       });
-      game.state.public.phase = "playing";
+
+      game.state.public.phase = phases.playing;
+      addCheckpoint(true);
+
+      game.players.forEach(player => {
+        if (player.active) {
+          player.state.public.hand = player.state.public.hand.map((c, i) => ({id: i}));
+
+          var shuffled = _.shuffle(player.state.public.hand);
+          player.state.private.hand.forEach((card, index) => card.id = shuffled[index].id);
+        }
+      });
+      addCheckpoint(false);
     }
 
     switch (type) {
       case "playCard":
-        if (game.state.public.phase !== "playing") {
+        if (game.state.public.phase !== phases.playing) {
           onError('You cannot play cards at this time')
           return;
         }
 
-        var cardIndex = Number(data);
-        var card = currentPlayer.state.private.hand[cardIndex];
+        var cardIndex = currentPlayer.state.private.hand.findIndex(c => c.id == data);
 
-        if (!card) {
+        if (cardIndex < 0) {
           onError('Specified card not found')
           return;
         }
+
         setNextTurnPlayer();
 
+        var card = currentPlayer.state.private.hand[cardIndex];
         currentPlayer.state.private.hand.splice(cardIndex, 1);
+        currentPlayer.state.internal.playedCards.push(card);
+
+        // The player needs to be able to see the card until it is played so add it temporarily
+        // to their private state without saving it
+        currentPlayer.state.private.playedCards = currentPlayer.state.public.playedCards.slice();
         currentPlayer.state.private.playedCards.push(card);
 
-        currentPlayer.state.public.hand.splice(cardIndex, 1);
-        currentPlayer.state.public.playedCards.push({});
+        currentPlayer.state.public.hand = currentPlayer.state.public.hand.filter(c => c.id !== card.id);
+        currentPlayer.state.public.playedCards.push({ id: card.id });
+        addCheckpoint(true);
+        delete currentPlayer.state.private.playedCards;
 
-        onSuccess();
-        return;
+        addCheckpoint(false);
+        break;
       case "bet":
-        if (game.state.public.phase === "playing") {
+        if (game.state.public.phase === phases.playing) {
           if (currentPlayer.state.public.playedCards.length > 0) {
-            game.state.public.phase = "betting";
+            game.state.public.phase = phases.betting;
           }
           else {
             onError('You must play a card before betting')
             return;
           }
         }
-        else if (game.state.public.phase !== "betting") {
+        else if (game.state.public.phase !== phases.betting) {
           onError('Cannot bet at this time');
           return;
         }
@@ -93,6 +138,7 @@ class SkullService {
           onError('You have already passed for this round')
           return;
         }
+        
         var bet = Number(data)
         var highestBet = Math.max(...game.players.map(p => p.state.public.currentBet));
 
@@ -108,13 +154,25 @@ class SkullService {
           return;
         }
 
-        setNextTurnPlayer(p => !p.state.public.passed);
+        if (bet == totalPlayed) {
+          game.state.public.phase = phases.revealing;
+          game.players.forEach(p => {
+            if (p !== currentPlayer) {
+              p.state.public.passed = true;
+            }
+          })
+        }
+        else {
+          setNextTurnPlayer();
+        }
+
         currentPlayer.state.public.currentBet = bet;
 
-        onSuccess();
-        return;
+        addCheckpoint(false);
+
+        break;
       case "pass":
-        if (game.state.public.phase !== "betting") {
+        if (game.state.public.phase !== phases.betting) {
           onError('Cannot pass at this time');
           return;
         }
@@ -132,16 +190,16 @@ class SkullService {
         }
 
         if (remainingPlayersCount == 2) {
-          game.state.public.phase = "revealing";
+          game.state.public.phase = phases.revealing;
         }
 
-        setNextTurnPlayer(p => !p.state.public.passed);
+        setNextTurnPlayer();
         currentPlayer.state.public.passed = true;
-        
-        onSuccess();
-        return;
+
+        addCheckpoint(false);
+        break;
       case "revealCard":
-        if (game.state.public.phase !== "revealing") {
+        if (game.state.public.phase !== phases.revealing) {
           onError('Cannot reveal at this time');
           return;
         }
@@ -170,7 +228,7 @@ class SkullService {
           var targetPlayer = currentPlayer;
         }
 
-        var card = targetPlayer.state.private.playedCards.pop();
+        var card = targetPlayer.state.internal.playedCards.pop();
 
         if (!card) {
           onError('Target player has no cards left');
@@ -180,18 +238,38 @@ class SkullService {
         targetPlayer.state.public.playedCards.pop();
         targetPlayer.state.public.revealedCards.push(card);
 
-        if (card.skull) {
-          let index = Math.floor(Math.random() * currentPlayer.state.private.allCards.length);
-          currentPlayer.state.private.allCards.splice(index, 1)
+        addCheckpoint(true);
+
+        if (card.value === 'skull') {
           reset();
+
+          let index = Math.floor(Math.random() * currentPlayer.state.private.hand.length);
+          let id = currentPlayer.state.private.hand[index].id;
+          currentPlayer.state.private.hand.splice(index, 1);
+          currentPlayer.state.public.hand = currentPlayer.state.public.hand.filter(c => c.id !== id);
+
+          if (currentPlayer.state.public.hand.length == 0) {
+            currentPlayer.active = false;
+            var activePlayers = game.players.filter(p => p.active)
+
+            if (activePlayers.length == 1) {
+              game.finsihed = true;
+            }
+            else {
+              setNextTurnPlayer();
+            }
+          }
+          addCheckpoint(false);
         }
         else {
           let totalRevealed = game.players.reduce((t, p) => t + p.state.public.revealedCards.length, 0);
 
           if (totalRevealed == currentPlayer.state.public.currentBet) {
             currentPlayer.state.public.score++;
+
             if (currentPlayer.state.public.score == 2) {
-              //Game ends
+              game.finsihed = true;
+              addCheckpoint(false);
             }
             else {
               reset();
@@ -199,11 +277,11 @@ class SkullService {
           }
         }
 
-        onSuccess({ userId, card });
-        return;
+        break;
       default:
         return;
     }
+    onSuccess(stateChain);
   }
 }
 

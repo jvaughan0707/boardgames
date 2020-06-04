@@ -13,16 +13,20 @@ class Create extends Component {
     return (
       <>
         <p>Select a game type below to create a lobby.</p>
+        <div id="game-tiles">
         {
           games.map(game => {
             return (
-              <div disabled={!this.props.allowCreate} className="game-tile" onClick={this.props.allowCreate ? () => this.createLobby(game.type) : null} key={game.type}>
-                <img src={game.img} alt={game.title}></img>
+              <div disabled={!this.props.allowCreate} className={`game-tile ${this.props.allowCreate ? 'clickable' : ''}`}  onClick={this.props.allowCreate ? () => this.createLobby(game.type) : null} key={game.type}>
+                <div className="thumbnail-container">
+                  <img class="thumbnail" src={game.img} alt={game.title}></img>
+                </div>
                 <h3>{game.title}</h3>
               </div>
             )
           })
         }
+        </div>
       </>
     )
   }

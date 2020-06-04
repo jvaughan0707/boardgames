@@ -1,14 +1,33 @@
 .game-tile, .game-tile img {
-  width: 100px;
+  height: auto;
+  max-height: 100%;
+  max-width: 100%;
+}
+
+#game-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 
 .game-tile h3 {
   margin: 0;
+  padding: 10px;
   text-align: center;
+  border: 1px solid black;
+  width: 130px;
+}
+
+.game-tile .thumbnail-container {
+  height: 150px;
+  width: 150px;
+  text-align: center;
+  background-color:rgb(44, 37, 48);
+  border: 1px solid black;
 }
 
 .game-tile {
-  border: 1px solid grey;
+  width: 150px;
 }
 
 .game-tile:enabled {
