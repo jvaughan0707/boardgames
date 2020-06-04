@@ -14,6 +14,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-/server/environment/environment.js
 /.vscode
 .env

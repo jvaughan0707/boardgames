@@ -1,17 +1,10 @@
 const mongoose = require('mongoose');
 
-mongoose.Promise = global.Promise;
+const mongoUri = process.env.MONGO_URI
 
-const mongoUri = process.env.mongoUri
-
-function connect () {
-    return mongoose.connect(mongoUri, { useNewUrlParser: true,  useUnifiedTopology: true })
-    .catch(err => { 
-        console.log(err, mongoUri); 
-    });
-}
-
-module.exports = {
-    connect,
-    mongoose
-}
+mongoose.connect(
+  mongoUri,
+  { useNewUrlParser: true, useUnifiedTopology: true }
+)
+.then(() => console.log("Connected to database"))
+.catch(err => console.error(err, mongoUri));
