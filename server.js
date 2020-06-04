@@ -1,5 +1,5 @@
 require('dotenv').config();
-require('./mongo');
+require('./server/mongo');
 
 const express = require('express');
 const bodyParser = require('body-parser');
