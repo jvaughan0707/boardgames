@@ -3,32 +3,21 @@ require('./server/mongo');
 
 const express = require('express');
 const bodyParser = require('body-parser');
-
+const path = require('path');
 const app = express();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-app.use(express.static("./build"));
+app.use(express.static("./client/build"));
 
 app.get('*', (req, res) => {
-  res.sendFile('index.html', { root: path.join(__dirname, "..", "build")})
+  res.sendFile('index.html', { root: path.join(__dirname, "client/build")})
 })
 
-const port = process.env.port
-app.listen(port, () => console.log("Listening on port " + port));
+const port = process.env.PORT
 
-const express = require('express');
-const bodyParser = require('body-parser');
+var http = require( "http" ).createServer( app );
+require('./server/socket')(http);
 
-const app = express();
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-
-app.get('*', (req, res) => {
-  res.sendFile('index.html', { root: __dirname})
-})
-
-const port = process.env.port
-app.listen(port, () => console.log("Listening on port " + port));
+http.listen(port, () => console.log("Listening on port " + port));

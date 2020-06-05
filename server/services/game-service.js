@@ -5,17 +5,17 @@ const _ = require('lodash');
 
 class GameService {
   static getLobbies(cb) {
-    return Lobby.aggregate([
-      {
-        $addFields: { lobbyId: { "$toString": "$_id" } }
-      },
-      {
-        $project:
-          { _id: 0, _v: 0 }
-      }
-    ])
+    return Lobby.find()
       .exec()
-      .then(cb);
+      .then((lobbies) => cb(lobbies.map(GameService.getLobbyObject)));
+  }
+
+  static getLobbyObject (doc) {
+    let lobby = doc.toObject();
+    lobby.lobbyId = doc.id;
+    delete lobby._id;
+    delete lobby.__v;
+    return lobby;
   }
 
   constructor(userId, io) {
@@ -23,15 +23,10 @@ class GameService {
       return Game.findById(id)
         .exec();
     }
-    var getLobbyObject = function (doc) {
-      let lobby = doc.toObject();
-      lobby.lobbyId = doc.id;
-      delete lobby._id;
-      delete lobby.__v;
-      return lobby;
-    }
 
-    var maskGameObject = function (game, playerId) {
+    
+
+    this.maskGameObject = function (game, playerId) {
       game.gameId = game._id;
       delete game._id;
       delete game.__v;
@@ -92,7 +87,7 @@ class GameService {
           return lobby.save();
         })
         .then(lobby => {
-          io.emit('lobbyCreated', getLobbyObject(lobby));
+          io.emit('lobbyCreated', GameService.getLobbyObject(lobby));
           this.join(lobby.id, displayName);
         })
         .catch(reason => {

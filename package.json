@@ -1,16 +1,34 @@
 {
-  "name": "express-react-starter",
-  "version": "0.1.0",
+  "name": "boardgames-server",
+  "version": "1.3.0",
   "private": true,
   "dependencies": {
     "body-parser": "^1.17.2",
     "cookie-parser": "^1.4.3",
+    "debug": "~2.6.3",
+    "dotenv": "^8.2.0",
     "express": "^4.15.3",
     "morgan": "^1.8.2",
-    "debug": "~2.6.3",
-    "jade": "^1.11.0"
+    "js-cookie": "^2.2.1",
+    "lodash": "^4.17.15",
+    "mongodb": "^3.5.5",
+    "mongodb-extjson": "^3.0.3",
+    "mongoose": "^5.9.7",
+    "socket.io": "^2.3.0"
   },
+  "main": "server.js",
   "scripts": {
-    "start": "./server.js"
+    "client-install": "cd client && npm install",
+    "start": "cd client && npm run build && cd ../ && node server",
+    "server": "nodemon server.js",
+    "client": "npm start --prefix client",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "devDependencies": {
+    "concurrently": "^3.5.0",
+    "nodemon": "^1.14.6"
+  },
+  "engines": {
+    "node": "10.14.2"
   }
 }

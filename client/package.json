@@ -1,44 +1,30 @@
 {
-  "name": "express-react-starter",
-  "version": "0.1.0",
+  "name": "boardgames-client",
+  "version": "1.3.0",
   "private": true,
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.28",
     "@fortawesome/free-solid-svg-icons": "^5.13.0",
     "@fortawesome/react-fontawesome": "^0.1.10",
     "@types/react": "^16.8.0",
-    "body-parser": "^1.19.0",
-    "constantinople": "^3.1.1",
     "cookie-parser": "^1.4.3",
-    "debug": "^2.6.9",
-    "dotenv": "^8.2.0",
-    "express": "^4.17.1",
-    "js-cookie": "^2.2.1",
-    "lodash": "^4.17.15",
-    "mongodb": "^3.5.5",
-    "mongodb-extjson": "^3.0.3",
-    "mongoose": "^5.9.7",
-    "morgan": "^1.10.0",
     "nvm": "0.0.4",
-    "pug": "^2.0.4",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.1.2",
     "reactn": "^2.2.7",
+    "react-scripts": "2.0.5",
     "socket.io": "^2.3.0",
     "universal-cookie": "^4.0.3",
     "websocket-as-promised": "^1.0.1",
-    "ws": "^7.2.3",
     "yargs-parser": "^18.1.2"
   },
   "devDependencies": {
-    "concurrently": "^3.5.0",
-    "nodemon": "^2.0.3",
-    "react-scripts": "^3.4.1"
+    "nodemon": "^2.0.3"
   },
   "scripts": {
-    "start": "concurrently \"react-scripts start\" ",
-    "build": "react-scripts build && mv build server",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
@@ -54,5 +40,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "engines": {
+    "node": "10.14.2"
   }
 }

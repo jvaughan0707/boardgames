@@ -1,38 +1,41 @@
-const io = require('socket.io')(server);
 const GameService = require('./services/game-service');
 const UserService = require('./services/user-service');
 
-io.on('connection', (ws) => {
-  ws.on('getOpenLobbies', GameService.getLobbies);
+module.exports = (server) => {
+  const io = require('socket.io')(server);
 
-  var cookies = {};
-  ws.request.headers.cookie &&
-    ws.request.headers.cookie.split(';').forEach(function (cookie) {
-      var parts = cookie.split('=');
-      cookies[parts.shift().trim()] = decodeURI(parts.join('='));
-    });
-  var { userId, userKey } = cookies;
+  io.on('connection', (ws) => {
+    ws.on('getOpenLobbies', GameService.getLobbies);
 
-  var userService = new UserService();
-  userService.validate(userId, userKey)
-    .then(user => {
-      ws.join(user.userId);
+    var cookies = {};
+    ws.request.headers.cookie &&
+      ws.request.headers.cookie.split(';').forEach(function (cookie) {
+        var parts = cookie.split('=');
+        cookies[parts.shift().trim()] = decodeURI(parts.join('='));
+      });
+    var { userId, userKey } = cookies;
 
-      ws.emit('userValidated', user);
-      var gameService = new GameService(user.userId, io);
+    var userService = new UserService();
+    userService.validate(userId, userKey)
+      .then(user => {
+        ws.join(user.userId);
 
-      ws.on('createLobby', gameService.create);
+        ws.emit('userValidated', user);
+        var gameService = new GameService(user.userId, io);
 
-      ws.on('joinLobby', gameService.join);
+        ws.on('createLobby', gameService.create);
 
-      ws.on('leaveLobby', gameService.leaveLobby);
-      
-      ws.on('quit', gameService.quit);
+        ws.on('joinLobby', gameService.join);
 
-      ws.on('getCurrentGame', gameService.getCurrentGame);
+        ws.on('leaveLobby', gameService.leaveLobby);
 
-      ws.on('startGame', gameService.start);
+        ws.on('quit', gameService.quit);
 
-      ws.on('gameAction', gameService.validateAction);
-    })
-});
+        ws.on('getCurrentGame', gameService.getCurrentGame);
+
+        ws.on('startGame', gameService.start);
+
+        ws.on('gameAction', gameService.validateAction);
+      })
+  });
+}

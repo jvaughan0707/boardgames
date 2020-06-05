@@ -1,7 +1,9 @@
 /node_modules
+/client/node_modules
 
 # production
 /server/build
+/client/build
 
 # misc
 .DS_Store
@@ -16,3 +18,4 @@ yarn-error.log*
 
 /.vscode
 .env
+package-lock.json
