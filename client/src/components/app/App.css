@@ -1,11 +1,25 @@
 .page {
-  padding: 10px;
+  padding: 40px 15px;
 }
 
 .clickable {
   cursor: pointer;
 }
 
-h2 {
-  margin: 10px 0
+section h2 {
+  margin-top: 0;
+  width: 100%;
+  border-bottom: 1px solid grey;
+}
+
+section {
+  filter: drop-shadow(10px 10px 1px #173753);
+  border: 3px solid #173753;
+  background-color: #fafaff;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+section:not(:last-of-type) {
+  margin-bottom: 20px;
 }

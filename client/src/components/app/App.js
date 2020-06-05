@@ -4,9 +4,9 @@ import Header from '../header/header';
 import Routes from '../routes/routes';
 import Auth from '../auth/auth';
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faStar, faUser } from '@fortawesome/free-solid-svg-icons'
+import { faStar, faUser, faArrowRight, faLink, faUnlink, faCog } from '@fortawesome/free-solid-svg-icons'
 
-library.add(faStar, faUser)
+library.add(faStar, faUser, faArrowRight, faLink, faUnlink, faCog)
 
 class App extends Component {
   constructor() {
@@ -18,9 +18,7 @@ class App extends Component {
     return (
       <Auth>
           <Header />
-          <div className="page">
-            <Routes/> 
-          </div>
+          <Routes/> 
       </Auth>
     );
   }

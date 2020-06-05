@@ -2,6 +2,9 @@ import React, { PureComponent } from 'reactn';
 import Cookies from 'universal-cookie';
 import Loading from '../loading/loading';
 import io from 'socket.io-client';
+import './auth.css'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+
 const cookies = new Cookies();
 
 class Auth extends PureComponent {
@@ -56,13 +59,14 @@ class Auth extends PureComponent {
     return (
       this.state.userValidated ?
         (this.global.user && this.global.user.displayName ?
-          <div className="App">
+          <div className="app">
             {this.props.children}
           </div> :
-          <div className="preAuth">
-            <label>Name:</label>
-            <input maxLength="15" type="text" onChange={this.handleChange.bind(this)} name="displayName"></input>
-            <button onClick={this.createUser.bind(this)} disabled={this.state.displayName.length === 0}>Go!</button>
+          <div className="pre-auth">
+            <input maxLength="15" type="text" onChange={this.handleChange.bind(this)} name="displayName" placeholder="Enter a username"></input>
+            <span id="submit">
+              <FontAwesomeIcon icon="arrow-right" onClick={this.createUser.bind(this)} disabled={this.state.displayName.length === 0} />
+            </span>
           </div>
         ) :
         <Loading />)

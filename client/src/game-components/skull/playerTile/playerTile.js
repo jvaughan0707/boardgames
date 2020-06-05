@@ -11,7 +11,7 @@ class PlayerTile extends Component {
       frontCard = images('./' + card.colour + '_flower.png');
     }
     var backCard = images('./' + card.colour + '_back.png');
-    var className = `card ${card.faceUp ? '' : 'flipped'} ${card.click ? 'clickable' : ''}  ${this.props.animate ? 'animated' : ''}`;
+    var className = `card ${card.className} ${card.faceUp ? '' : 'flipped'} ${card.click ? 'clickable' : ''}  ${this.props.animate ? 'animated' : ''}`;
     return (
       <div key={card.id} onClick={card.click} className={className}
         style={card.style}>
@@ -58,7 +58,8 @@ class PlayerTile extends Component {
                 colour,
                 faceUp: false,
                 click: revealingPhase && user.state.currentTurn && (this.props.playerIsUser || user.state.playedCards.length === 0) ? () => this.props.sendMove("revealCard", player.userId) : null,
-                style: { transform: `translate(168%, ${17 - index * 15}%) rotateX(45deg)`, zIndex: 5 + index, filter: 'drop-shadow(0px 5px 0px #222)' }
+                style: { transform: `translate(168%, ${17 - index * 15}%) rotateX(45deg)`, zIndex: 5 + index },
+                className: "played-card"
               })),
               ...player.state.revealedCards.map((card, index) => ({
                 ...card,

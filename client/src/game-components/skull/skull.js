@@ -55,7 +55,7 @@ class Skull extends Component {
 
     if (i === 0) {
       x = 75;
-      y = 10;
+      y = 3;
     }
     else {
       if (i > playerCount / 2) {
@@ -67,7 +67,7 @@ class Skull extends Component {
       else {
         x = 75;
       }
-      y = 212 + (playerCount / 2 - Math.abs(playerCount / 2 - i) - 1) * 105;
+      y = 200 + (playerCount / 2 - Math.abs(playerCount / 2 - i) - 1) * 105;
     }
     return `translate(${x}%, ${y}%)`;
   }

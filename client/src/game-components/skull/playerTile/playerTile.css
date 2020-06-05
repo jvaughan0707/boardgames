@@ -1,7 +1,9 @@
 .player-tile {
+  background-color: white;
   width: 40%;
   padding-top: 11%;
-  border: 1px solid grey;
+  border: 2px solid #173753;
+  filter: drop-shadow(10px 5px 1px #173753);
   border-radius: 10px;
   position: absolute;
   top: 0;
@@ -69,6 +71,10 @@
 
 .card.animated, .card.animated .card-inner {
   transition: transform 1s, z-index 0s 1s;
+}
+
+.played-card img {
+  filter: drop-shadow(0px 5px 0px #222);
 }
 
 .card * {
