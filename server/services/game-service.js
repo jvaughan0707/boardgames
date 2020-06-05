@@ -3,51 +3,48 @@ const Lobby = require('../models/lobby');
 const SkullService = require('./skull-service');
 const _ = require('lodash');
 
+var getLobbyObject = function (doc) {
+  let lobby = doc.toObject();
+  lobby.lobbyId = doc.id;
+  delete lobby._id;
+  delete lobby.__v;
+  return lobby;
+}
+
+var maskGameObject = function (game, playerId) {
+  game.gameId = game._id;
+  delete game._id;
+  delete game.__v;
+
+  delete game.state.internal;
+  game.state = game.state.public;
+
+  game.players.forEach(player => {
+    delete player.state.internal;
+    if (player.userId !== playerId) {
+      delete player.state.private;
+      player.state = player.state.public;
+    }
+    else {
+      player.state = {
+        ...player.state.public,
+        ...player.state.private
+      }
+    }
+  });
+  return game;
+}
 class GameService {
   static getLobbies(cb) {
     return Lobby.find()
       .exec()
-      .then((lobbies) => cb(lobbies.map(GameService.getLobbyObject)));
-  }
-
-  static getLobbyObject (doc) {
-    let lobby = doc.toObject();
-    lobby.lobbyId = doc.id;
-    delete lobby._id;
-    delete lobby.__v;
-    return lobby;
+      .then((lobbies) => cb(lobbies.map(getLobbyObject)));
   }
 
   constructor(userId, io) {
     var getById = function (id) {
       return Game.findById(id)
         .exec();
-    }
-
-    
-
-    this.maskGameObject = function (game, playerId) {
-      game.gameId = game._id;
-      delete game._id;
-      delete game.__v;
-
-      delete game.state.internal;
-      game.state = game.state.public;
-
-      game.players.forEach(player => {
-        delete player.state.internal;
-        if (player.userId !== playerId) {
-          delete player.state.private;
-          player.state = player.state.public;
-        }
-        else {
-          player.state = {
-            ...player.state.public,
-            ...player.state.private
-          }
-        }
-      });
-      return game;
     }
 
     this.getCurrentGame = cb => {
@@ -87,7 +84,7 @@ class GameService {
           return lobby.save();
         })
         .then(lobby => {
-          io.emit('lobbyCreated', GameService.getLobbyObject(lobby));
+          io.emit('lobbyCreated', getLobbyObject(lobby));
           this.join(lobby.id, displayName);
         })
         .catch(reason => {
