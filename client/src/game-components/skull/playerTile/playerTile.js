@@ -35,7 +35,7 @@ class PlayerTile extends Component {
     var player = this.props.player;
     var user = this.props.user;
     var colour = player.state.colour;
-    var baseImg = images('./' + colour + '_base.png');
+    var baseImg = images('./' + colour + '_base_front.png');
     var playingPhase = game.state.phase === "playing";
     var bettingPhase = game.state.phase === "betting";
     var revealingPhase = game.state.phase === "revealing";
