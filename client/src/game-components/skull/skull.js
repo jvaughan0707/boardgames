@@ -54,20 +54,19 @@ class Skull extends Component {
     var y = 0
 
     if (i === 0) {
-      x = 75;
-      y = 3;
+      x = 70;
     }
     else {
       if (i > playerCount / 2) {
-        x = 5
+        x = 0;
       }
       else if (i < playerCount / 2) {
-        x = 145
+        x = 140;
       }
       else {
-        x = 75;
+        x = 70;
       }
-      y = 200 + (playerCount / 2 - Math.abs(playerCount / 2 - i) - 1) * 105;
+      y = 200 + (playerCount / 2 - Math.abs(playerCount / 2 - i) - 1) * 110;
     }
     return `translate(${x}%, ${y}%)`;
   }
@@ -88,56 +87,79 @@ class Skull extends Component {
     }
     else {
       var players = game.players;
-      var maxBet = this.getMaxBet(game);
-      var minBet = Math.min(this.getMinBet(game), maxBet);
+      var minBet = this.getMinBet(game);
+      var maxBet = Math.min(this.getMaxBet(game), 1);
       var userIndex = players.findIndex(p => p.userId === this.global.user.userId);
       var user = players[userIndex];
+      var currentTurnPlayer = players.find(p => p.state.currentTurn);
       players = [...players.slice(userIndex), ...players.slice(0, userIndex)];
 
       var playingPhase = this.state.game.state.phase === "playing";
       var bettingPhase = game.state.phase === "betting";
+      var revealingPhase = game.state.phase === "revealing";
       var canBet = user.state.currentTurn && user.state.playedCards.length > 0 && (playingPhase || bettingPhase);
+      var betAmount = Math.max(this.state.betAmount, minBet);
 
-      return (
-        <div className="skull-container">
-          {
-            players.map((p, i) =>
-              <PlayerTile
-                style={{ transform: this.getTilePosition(i) }}
-                key={p.userId}
-                game={this.state.game}
-                player={p}
-                user={user}
-                playerIsUser={i === 0}
-                sendMove={this.sendMove}
-                animate={this.state.animate}
-                updating={this.state.updating} />)
-          }
-          {
-            <div className="controls">
-              <div>
-                <button onClick={() => this.sendMove("bet", this.state.betAmount)} disabled={!canBet}>
-                  Bet
-              </button>
-                <input
-                  type="number"
-                  min={minBet}
-                  max={maxBet}
-                  disabled={!canBet}
-                  value={Math.max(this.state.betAmount, minBet)}
-                  onChange={this.onBetAmountChange}>
-                </input>
-                <br />
-                <button disabled={!user.state.currentTurn || !bettingPhase}
-                  onClick={() => this.props.sendMove("pass", null)}>Pass
-                </button>
-              </div>
-            </div>
-          }
+      var actionText = user.state.currentTurn ? 'You' : currentTurnPlayer.displayName;
+      if (playingPhase) 
+      {
+        actionText += ' must play a card';
+        if (currentTurnPlayer.state.playedCards.length > 0) {
+          actionText += ' or place a bet';
+        }
+      } 
+      else if (bettingPhase) {
+        actionText += ' must raise or pass';
+      }
+      else if (revealingPhase) {
+        var remainingCards = 1;
+        actionText += ` must reveal ${remainingCards} more card${remainingCards.length > 1 ? 's' : ''}`;
+      }
+   
+
+    return (
+      <div className="skull-container">
+        {
+          players.map((p, i) =>
+            <PlayerTile
+              style={{ transform: this.getTilePosition(i) }}
+              key={p.userId}
+              game={this.state.game}
+              player={p}
+              user={user}
+              playerIsUser={i === 0}
+              sendMove={this.sendMove}
+              animate={this.state.animate}
+              updating={this.state.updating} />)
+        }
+        <div className="panel left">
+          <div id="controls">
+            <button onClick={() => this.sendMove("bet", betAmount)} disabled={!canBet}>
+              Bet
+            </button>
+            <input
+              type="number"
+              min={minBet}
+              max={maxBet}
+              disabled={!canBet}
+              value={betAmount}
+              onChange={this.onBetAmountChange}>
+            </input>
+            <br />
+            <button disabled={!user.state.currentTurn || !bettingPhase}
+              onClick={() => this.sendMove("pass", null)}>Pass
+            </button>
+          </div>
         </div>
-      )
-    }
+        <div className="panel right">
+          <div>
+            {actionText}
+          </div>
+        </div>
+      </div>
+    )
   }
+}
 }
 
 export default Skull

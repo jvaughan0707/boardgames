@@ -4,5 +4,6 @@ body {
   background: linear-gradient(#25a3ff, #aabeff);
   background-attachment: fixed;
   font-family: sans-serif;
+  min-width: 280px;
 }
 

@@ -1,16 +1,73 @@
 .skull-container {
+  max-width: calc(100% - 10px);
+  width: 165vh;
+  min-width: 400px;
+  box-sizing: border-box;
+}
+
+@media only screen and (min-width: 600px) {
+  .skull-container {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 5px;
+  }
+}
+@media only screen and (max-width: 600px) {
+  .skull-container .panel.left {
+    position: initial;
+  }
+
+  .skull-container #controls {
+    background: none;
+    border: none;
+    position: absolute;
+    top: 35px;
+    left: 15px;
+    transform: none;
+    filter: none;
+  }
+
+  .skull-container .panel.right {
+   display: none;
+  }
+}
+
+.panel {
   position: absolute;
-  top: 0;
-  left: 0;
+  padding-top: 26%;
+  width: 28%;
 }
-@media screen and (orientation:landscape) {
-  .skull-container {
-    width: 170vh;
-    max-width: 100%;
-  }
+
+.panel.right {
+  left: 70%;
 }
-@media screen and (orientation:portrait) {
-  .skull-container {
-    width: 100%;
-  }
+
+.panel > div {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(10px 5px 1px #173753);
+  border: 2px solid #173753;
+  width: 140px;
+  height: 80px;
+  border-radius: 10px;
+  background-color: white;
+  padding: 10px;
+}
+
+#controls input {
+  width: 35px;
+  height: 20px;
+}
+
+#controls button {
+  width: 50px;
+}
+
+#controls * {
+  margin: 5px 10px;
+  font-size: 16px;
 }

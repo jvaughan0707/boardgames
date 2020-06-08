@@ -1,6 +1,6 @@
 const Lobby = require('../models/lobby');
 const _ = require('lodash');
-const phases = { playing: 'playing', betting: 'betting', revealing: 'revealing'};
+const phases = { playing: 'playing', betting: 'betting', revealing: 'revealing', cleanUp: 'cleanUp'};
 
 class SkullService {
   static createLobby() {
@@ -51,6 +51,8 @@ class SkullService {
     var addCheckpoint = (animate) => stateChain.push({ game: game.toObject(), animate})
 
     var reset = () => {
+      game.state.pubic.phase = phases.cleanUp;
+      addCheckpoint(true);
       game.players.forEach(player => {
         if (player.active) {
 
@@ -73,7 +75,6 @@ class SkullService {
         }
       });
 
-      game.state.public.phase = phases.playing;
       addCheckpoint(true);
 
       game.players.forEach(player => {
@@ -257,22 +258,25 @@ class SkullService {
             }
             else {
               setNextTurnPlayer();
+              game.state.public.phase = phases.playing;
             }
           }
-          addCheckpoint(false);
+          addCheckpoint(true);
         }
         else {
           let totalRevealed = game.players.reduce((t, p) => t + p.state.public.revealedCards.length, 0);
 
           if (totalRevealed == currentPlayer.state.public.currentBet) {
-            currentPlayer.state.public.score++;
 
-            if (currentPlayer.state.public.score == 2) {
+            if (currentPlayer.state.public.score == 1) {
               game.finsihed = true;
               addCheckpoint(false);
             }
             else {
               reset();
+              currentPlayer.state.public.score++;
+              game.state.public.phase = phases.playing;
+              addCheckpoint(true);
             }
           }
         }

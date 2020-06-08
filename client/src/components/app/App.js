@@ -14,12 +14,16 @@ class App extends Component {
     this.setGlobal({ user: null, webSocket: null });
   }
 
-  render () {
+  render() {
     return (
-      <Auth>
-          <Header />
-          <Routes/> 
-      </Auth>
+      <>
+        <Header />
+        <Auth>
+          <div className="page">
+            <Routes />
+          </div>
+        </Auth>
+      </>
     );
   }
 };

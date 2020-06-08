@@ -1,6 +1,5 @@
 #header {
   position: absolute;
-  /* padding: 20px; */
   height: 20px;
   width: 100%;
   z-index: 99;
@@ -9,6 +8,6 @@
 #header-buttons {
   float: right;
   color: white;
-  margin: 10px;
+  margin: 2px 10px;
   font-size: 22px;
 }

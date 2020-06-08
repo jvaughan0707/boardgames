@@ -1,5 +1,6 @@
 import React, { Component } from 'reactn';
 import './playerTile.css';
+
 const images = require.context('../../../resources/skull', true);
 
 class PlayerTile extends Component {
@@ -36,25 +37,35 @@ class PlayerTile extends Component {
     var colour = player.state.colour;
     var baseImg = images('./' + colour + '_base.png');
     var playingPhase = game.state.phase === "playing";
+    var bettingPhase = game.state.phase === "betting";
     var revealingPhase = game.state.phase === "revealing";
     return (
-      <div className={`player-tile ${this.props.playerIsUser ? 'primary' : ''}`} style={this.props.style}>
+      <div className={`player-tile ${this.props.playerIsUser ? 'primary' : ''} ${player.state.currentTurn ? 'current-turn' : ''}`} style={this.props.style}>
         <div className="player-tile-inner">
           <h3>{player.displayName}</h3>
-          {/* {player.state.currentTurn && "*"} | Current Bet: {player.state.currentBet} | Current Score: {player.state.score} */}
+          {
+            bettingPhase &&
+            (player.state.currentBet || player.state.passed) &&
+            <div className="speech-bubble">
+              { player.state.passed ? 'Pass' :
+                'I bet ' + player.state.currentBet}
+            </div>
+          }
           <img src={baseImg} alt="base" className="base-card"></img>
           {
             //Needs to be one JSX expression so that CSS animations work
             [
               ...player.state.hand.map((card, index) => ({
-                ...card,
+                value: card.value,
+                id: card.id,
                 colour,
                 faceUp: this.props.playerIsUser,
                 click: playingPhase && this.props.playerIsUser && player.state.currentTurn ? () => this.props.sendMove("playCard", card.id) : null,
-                style: { transform: this.props.playerIsUser ? `translate(${10 + index * 105}%, 120%)` : `translate(${10 + index * 15}%, 10%)`, zIndex: 12 - index }
+                style: { transform: this.props.playerIsUser ? `translate(${10 + index * 105}%, 120%)` : `translate(${10 + index * 15}%, 15%)`, zIndex: 12 - index }
               })),
               ...player.state.playedCards.map((card, index) => ({
-                ...card,
+                value: card.value,
+                id: card.id,
                 colour,
                 faceUp: false,
                 click: revealingPhase && user.state.currentTurn && (this.props.playerIsUser || user.state.playedCards.length === 0) ? () => this.props.sendMove("revealCard", player.userId) : null,
@@ -62,15 +73,16 @@ class PlayerTile extends Component {
                 className: "played-card"
               })),
               ...player.state.revealedCards.map((card, index) => ({
-                ...card,
+                value: card.value,
+                id: card.id,
                 colour,
                 faceUp: true,
                 click: null,
-                style: { transform: `translate(${280 + index * 15}%, 10%)`, zIndex: index }
+                style: { transform: `translate(${280 + index * 15}%, 15%)`, zIndex: index }
               }))
             ].sort((a, b) => a.id - b.id)
               .map(card => this.renderCard(card))
-          }          
+          }
         </div>
       </div>
     );

@@ -13,8 +13,9 @@
 }
 
 .lobby-players {
-  display: flex;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 200px);
 }
 
 .lobby-controls {

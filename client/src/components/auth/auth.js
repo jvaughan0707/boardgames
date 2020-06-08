@@ -59,9 +59,7 @@ class Auth extends PureComponent {
     return (
       this.state.userValidated ?
         (this.global.user && this.global.user.displayName ?
-          <div className="app">
-            {this.props.children}
-          </div> :
+          this.props.children :
           <div className="pre-auth">
             <input maxLength="15" type="text" onChange={this.handleChange.bind(this)} name="displayName" placeholder="Enter a username"></input>
             <span id="submit">

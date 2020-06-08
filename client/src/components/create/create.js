@@ -19,7 +19,7 @@ class Create extends Component {
             return (
               <div disabled={!this.props.allowCreate} className={`game-tile ${this.props.allowCreate ? 'clickable' : ''}`}  onClick={this.props.allowCreate ? () => this.createLobby(game.type) : null} key={game.type}>
                 <div className="thumbnail-container">
-                  <img class="thumbnail" src={game.img} alt={game.title}></img>
+                  <img className="thumbnail" src={game.img} alt={game.title}></img>
                 </div>
                 <h3>{game.title}</h3>
               </div>

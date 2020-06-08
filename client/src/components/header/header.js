@@ -10,8 +10,8 @@ const Header = () => {
   return (
     <div id="header">
       <div id="header-buttons" >
-        {!ws.connected && <FontAwesomeIcon icon="unlink" />}
-        {user && <FontAwesomeIcon icon="cog" />}
+        {!(ws && ws.connected) && <FontAwesomeIcon icon="unlink"/>}
+        {user && <FontAwesomeIcon icon="cog"  className="clickable"/>}
       </div>
     </div>
   );

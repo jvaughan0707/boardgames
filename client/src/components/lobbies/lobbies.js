@@ -77,7 +77,7 @@ class Lobbies extends Component {
     return (
       this.state.loading ?
         <Loading /> :
-        <div className="page">
+        <>
           <section>
             <h2>Create</h2>
             <Create allowCreate={!this.state.inLobby} />
@@ -86,7 +86,7 @@ class Lobbies extends Component {
             <h2>Join</h2>
             <LobbyTiles lobbies={this.state.lobbies} allowJoin={!this.state.inLobby}></LobbyTiles>
           </section>
-        </div>
+        </>
 
     );
   }
