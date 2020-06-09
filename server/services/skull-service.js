@@ -1,6 +1,6 @@
 const Lobby = require('../models/lobby');
 const _ = require('lodash');
-const phases = { playing: 'playing', betting: 'betting', revealing: 'revealing', cleanUp: 'cleanUp'};
+const phases = { playing: 'playing', betting: 'betting', revealing: 'revealing', cleanUp: 'cleanUp' };
 
 class SkullService {
   static createLobby() {
@@ -8,7 +8,7 @@ class SkullService {
   }
 
   static initializeGame(game) {
-    const colours = ["beige", "blue", "red", "pink", "green", "purple"];
+    const colours = ["gold", "blue", "red", "pink", "green", "purple"];
 
     game.state = { public: { phase: phases.playing }, internal: {} };
 
@@ -35,8 +35,9 @@ class SkullService {
 
     var setNextTurnPlayer = () => {
       currentPlayer.state.public.currentTurn = false;
+      var turn = currentPlayer.__index;
+
       for (var i = 0; i < game.players.length; i++) {
-        var turn = currentPlayer.__index;
         turn++;
         turn %= game.players.length;
         let player = game.players[turn];
@@ -48,11 +49,9 @@ class SkullService {
       }
     }
 
-    var addCheckpoint = (animate) => stateChain.push({ game: game.toObject(), animate})
+    var addCheckpoint = (animate, pause) => stateChain.push({ game: game.toObject(), animate, pause })
 
     var reset = () => {
-      game.state.pubic.phase = phases.cleanUp;
-      addCheckpoint(true);
       game.players.forEach(player => {
         if (player.active) {
 
@@ -79,7 +78,7 @@ class SkullService {
 
       game.players.forEach(player => {
         if (player.active) {
-          player.state.public.hand = player.state.public.hand.map((c, i) => ({id: i}));
+          player.state.public.hand = player.state.public.hand.map((c, i) => ({ id: i }));
 
           var shuffled = _.shuffle(player.state.public.hand);
           player.state.private.hand.forEach((card, index) => card.id = shuffled[index].id);
@@ -139,7 +138,7 @@ class SkullService {
           onError('You have already passed for this round')
           return;
         }
-        
+
         var bet = Number(data)
         var highestBet = Math.max(...game.players.map(p => p.state.public.currentBet));
 
@@ -155,19 +154,21 @@ class SkullService {
           return;
         }
 
+        currentPlayer.state.public.currentBet = bet;
+
         if (bet == totalPlayed) {
-          game.state.public.phase = phases.revealing;
           game.players.forEach(p => {
             if (p !== currentPlayer) {
               p.state.public.passed = true;
             }
           })
+          addCheckpoint(false, 2000);
+
+          game.state.public.phase = phases.revealing;
         }
         else {
           setNextTurnPlayer();
         }
-
-        currentPlayer.state.public.currentBet = bet;
 
         addCheckpoint(false);
 
@@ -183,7 +184,7 @@ class SkullService {
           return;
         }
 
-        var remainingPlayersCount = game.players.filter(p => !p.state.public.passed).length;
+        var remainingPlayersCount = game.players.filter(p => p.active && !p.state.public.passed).length;
 
         if (remainingPlayersCount == 1) {
           onError('You cannot pass as the final player')
@@ -242,6 +243,8 @@ class SkullService {
         addCheckpoint(true);
 
         if (card.value === 'skull') {
+          addCheckpoint(false, 2000);
+          game.state.public.phase = phases.cleanUp;
           reset();
 
           let index = Math.floor(Math.random() * currentPlayer.state.private.hand.length);
@@ -254,33 +257,35 @@ class SkullService {
             var activePlayers = game.players.filter(p => p.active)
 
             if (activePlayers.length == 1) {
-              game.finsihed = true;
+              game.finished = true;
             }
             else {
               setNextTurnPlayer();
-              game.state.public.phase = phases.playing;
             }
           }
+
           addCheckpoint(true);
+          game.state.public.phase = phases.playing;
         }
         else {
           let totalRevealed = game.players.reduce((t, p) => t + p.state.public.revealedCards.length, 0);
 
           if (totalRevealed == currentPlayer.state.public.currentBet) {
+            addCheckpoint(false, 2000);
 
             if (currentPlayer.state.public.score == 1) {
-              game.finsihed = true;
-              addCheckpoint(false);
+              game.finished = true;
             }
             else {
+              game.state.public.phase = phases.cleanUp;
               reset();
               currentPlayer.state.public.score++;
               game.state.public.phase = phases.playing;
-              addCheckpoint(true);
             }
           }
         }
 
+        addCheckpoint(false);
         break;
       default:
         return;

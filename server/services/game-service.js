@@ -227,8 +227,8 @@ class GameService {
                 game.players.forEach(player => {
                   var output = stateChain.map(x =>
                     ({
+                      ...x,
                       game: maskGameObject(_.cloneDeep(x.game), player.userId),
-                      animate: x.animate
                     })
                   );
                   io.to(player.userId).emit(
