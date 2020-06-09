@@ -1,25 +1,25 @@
 .player-tile {
   background-color: white;
-  width: 40%;
+  width: 45%;
   padding-top: 11%;
-  border: 2px solid #173753;
-  filter: drop-shadow(10px 5px 1px #173753);
+  border: 2px solid rgb(23, 55, 83);
+  box-shadow: 5px 2px 1px #173753;
   border-radius: 10px;
   position: absolute;
   top: 0;
   left: 0;
+  font-size: min(1.5vw, 13px);
 }
 
 .player-tile.primary {
   padding-top: 21%;
 }
 
-
 .player-tile.current-turn {
   background-color: #f7d1d1;
 }
 
-@media only screen and (max-width: 600px) {
+@media only screen and (max-width: 650px) {
   .player-tile {
     position: relative;
     transform: none !important;
@@ -40,16 +40,16 @@
 .speech-bubble {
   text-align: center;
   width: 15%;
-  height: 17%;
+  height: 15%;
   position: absolute;
-  transform: translate(275%, 50%);
+  transform: translate(315%, 60%);
   background: #00aabb;
   border-radius: 20%;
-  padding: 5%;
+  padding: 4%;
 }
 
 .player-tile.primary .speech-bubble { 
-  height: 9%;
+  height: 8%;
 }
 
 .speech-bubble:after {
@@ -69,7 +69,6 @@
 }
 
 .player-tile-inner {
-  perspective: 350px;
   position: absolute;
   top: 0;
   left: 0;
@@ -78,73 +77,27 @@
 }
 
 .player-tile h3 {
-  padding: 2px;
   margin: 5px;
   float: right;
 }
 
-.player-tile h3, .speech-bubble {
-  font-size: min(1.5vw, 13px);
-}
-
 .card {
-  width: 23%;
-  padding-top: 23%;
-  perspective: 500px;
+  width: 22%;
+  padding-top: 22%;
   position: absolute;
-  border-radius: 50px;
+  border-radius: 100%;
 }
 
-.card.animated, .card.animated .card-inner {
-  transition: transform 1s, z-index 0s 1s;
-}
-
-.played-card.animated .card-back img {
-  transition: filter 1s;
-}
-
-.played-card .card-back img {
-  filter: drop-shadow(0px 5px 0px #222);
-}
-
-.card * {
-  border-radius: 50px;
-}
 .card img {
-  width: 100%;
-  height: auto;
+  border-radius: 100%;
 }
 
-.card-inner {
+.base-tile {
+  width: 27%;
+  padding-top: 27%;
   position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
 }
 
-.card.flipped .card-inner {
-  transform: rotateY(180deg);
-}
-
-.card-front, .card-back {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-
-.card-back {
-  transform: rotateY(180deg);
-}
-
-.base-card {
-  width: 25%;
-  height: auto;
-  position: absolute;
-  transform: translate(150%, 15%) rotateX(45deg);
+.base-tile img {
+  border-radius: 7%;
 }

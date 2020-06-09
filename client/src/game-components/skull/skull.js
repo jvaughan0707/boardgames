@@ -29,14 +29,14 @@ class Skull extends Component {
   onGameAction(stateChain) {
     console.log(stateChain.slice());
     var setNext = () => {
-      let { game, animate } = stateChain.shift();
+      let { game, animate, pause } = stateChain.shift();
       if (game) {
         this.setState({ updating: true, game, animate: animate && this.props.animate });
 
         if (stateChain.length > 0) {
           setTimeout(() => {
             setNext();
-          }, animate ? 1000 : 100)
+          }, (pause || 0) + (animate ? 1000 : 100))
         }
         else {
           this.setState({ updating: false })
@@ -54,19 +54,19 @@ class Skull extends Component {
     var y = 0
 
     if (i === 0) {
-      x = 70;
+      x = 58;
     }
     else {
       if (i > playerCount / 2) {
         x = 0;
       }
       else if (i < playerCount / 2) {
-        x = 140;
+        x = 117;
       }
       else {
-        x = 70;
+        x = 58;
       }
-      y = 200 + (playerCount / 2 - Math.abs(playerCount / 2 - i) - 1) * 110;
+      y = 193 + (playerCount / 2 - Math.abs(playerCount / 2 - i) - 1) * 105;
     }
     return `translate(${x}%, ${y}%)`;
   }
@@ -82,40 +82,57 @@ class Skull extends Component {
 
   render() {
     var game = this.state.game;
-    if (game.finished) {
+    var players = game.players;
+    var maxBet = Math.max(this.getMaxBet(game), 1);
+    var minBet = Math.min(this.getMinBet(game), maxBet);
+    var userIndex = players.findIndex(p => p.userId === this.global.user.userId);
+    var user = players[userIndex];
+    var currentTurnPlayer = players.find(p => p.state.currentTurn);
+    players = [...players.slice(userIndex), ...players.slice(0, userIndex)];
 
+    var playingPhase = this.state.game.state.phase === "playing";
+    var bettingPhase = game.state.phase === "betting";
+    var revealingPhase = game.state.phase === "revealing";
+    var cleanUp = game.state.phase === "cleanUp";
+
+    var canBet = user.state.currentTurn && user.state.playedCards.length > 0 && (playingPhase || bettingPhase);
+    var betAmount = Math.max(this.state.betAmount, minBet);
+
+    var actionText = user.state.currentTurn ? 'You' : currentTurnPlayer.displayName;
+    if (game.finished) {
+      actionText += ` win${user.state.currentTurn ? '' : 's'} the game!`
     }
     else {
-      var players = game.players;
-      var minBet = this.getMinBet(game);
-      var maxBet = Math.min(this.getMaxBet(game), 1);
-      var userIndex = players.findIndex(p => p.userId === this.global.user.userId);
-      var user = players[userIndex];
-      var currentTurnPlayer = players.find(p => p.state.currentTurn);
-      players = [...players.slice(userIndex), ...players.slice(0, userIndex)];
-
-      var playingPhase = this.state.game.state.phase === "playing";
-      var bettingPhase = game.state.phase === "betting";
-      var revealingPhase = game.state.phase === "revealing";
-      var canBet = user.state.currentTurn && user.state.playedCards.length > 0 && (playingPhase || bettingPhase);
-      var betAmount = Math.max(this.state.betAmount, minBet);
-
-      var actionText = user.state.currentTurn ? 'You' : currentTurnPlayer.displayName;
-      if (playingPhase) 
-      {
+      if (playingPhase) {
         actionText += ' must play a card';
         if (currentTurnPlayer.state.playedCards.length > 0) {
           actionText += ' or place a bet';
         }
-      } 
+      }
       else if (bettingPhase) {
         actionText += ' must raise or pass';
       }
       else if (revealingPhase) {
-        var remainingCards = 1;
-        actionText += ` must reveal ${remainingCards} more card${remainingCards.length > 1 ? 's' : ''}`;
+        if (game.players.some(p => p.state.revealedCards.some(c => c.value === 'skull'))) {
+          actionText += user.state.currentTurn ? ' have revealed a skull and lose one of your cards' :
+            ' has revealed a skull and loses one of their cards'
+        }
+        else {
+          var remainingCards = currentTurnPlayer.state.currentBet - game.players.reduce((t, p) => t + p.state.revealedCards.length, 0);
+
+          if (remainingCards > 0) {
+            actionText += ` must reveal ${remainingCards} more card${remainingCards > 1 ? 's' : ''}`;
+          }
+          else {
+            actionText += user.state.currentTurn ? ' have acheived your bet and score a point'
+              : ' has acheived their bet and scores a point'
+          }
+        }
       }
-   
+      else if (cleanUp) {
+        actionText = 'Preparing for next round...'
+      }
+    }
 
     return (
       <div className="skull-container">
@@ -159,7 +176,6 @@ class Skull extends Component {
       </div>
     )
   }
-}
 }
 
 export default Skull

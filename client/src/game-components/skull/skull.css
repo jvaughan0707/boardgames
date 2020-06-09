@@ -1,11 +1,11 @@
 .skull-container {
   max-width: calc(100% - 10px);
-  width: 165vh;
+  width: 171vh;
   min-width: 400px;
   box-sizing: border-box;
 }
 
-@media only screen and (min-width: 600px) {
+@media only screen and (min-width: 651px) {
   .skull-container {
     position: absolute;
     top: 0;
@@ -14,7 +14,7 @@
     margin: 5px;
   }
 }
-@media only screen and (max-width: 600px) {
+@media only screen and (max-width: 650px) {
   .skull-container .panel.left {
     position: initial;
   }
@@ -26,7 +26,7 @@
     top: 35px;
     left: 15px;
     transform: none;
-    filter: none;
+    box-shadow: none;
   }
 
   .skull-container .panel.right {
@@ -36,12 +36,16 @@
 
 .panel {
   position: absolute;
-  padding-top: 26%;
-  width: 28%;
+  padding-top: 22%;
+  width: 22%;
 }
 
 .panel.right {
-  left: 70%;
+  left: 75%;
+}
+
+.panel.left {
+  left: 1%;
 }
 
 .panel > div {
@@ -49,7 +53,7 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  filter: drop-shadow(10px 5px 1px #173753);
+  box-shadow: 10px 5px 1px #173753;
   border: 2px solid #173753;
   width: 140px;
   height: 80px;

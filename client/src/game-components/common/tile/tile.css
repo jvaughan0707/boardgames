@@ -1,0 +1,35 @@
+.tile {
+  perspective: 350px;
+}
+
+.tile.animated, .tile.animated * {
+  transition: transform 1s, z-index 0s 1s, filter 1s, box-shadow 1s;
+}
+
+.tile img {
+  width: 100%;
+  height: auto;
+}
+
+.tile-x-plane, .tile-y-plane {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.tile-front, .tile-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.tile-back {
+  transform: rotateY(180deg);
+}
