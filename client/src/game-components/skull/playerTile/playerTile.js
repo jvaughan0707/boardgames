@@ -4,7 +4,7 @@ import './playerTile.css';
 const images = require.context('../../../resources/skull', true);
 
 class PlayerTile extends Component {
-  render() {
+   render() {
     var game = this.props.game;
     var player = this.props.player;
     var user = this.props.user;
@@ -16,7 +16,9 @@ class PlayerTile extends Component {
     var bettingPhase = game.state.phase === "betting";
     var revealingPhase = game.state.phase === "revealing";
     return (
-      <div className={`player-tile ${this.props.playerIsUser ? 'primary' : ''} ${player.state.currentTurn ? 'current-turn' : ''}`} style={this.props.style}>
+      <div className={`player-tile ${this.props.playerIsUser ? 'primary' : ''} ${player.state.currentTurn ? 'current-turn' : ''}`} 
+        style={this.props.style}>
+        
         <div className="player-tile-inner">
           <h3>{player.displayName}</h3>
           {

@@ -1,6 +1,7 @@
 .skull-container {
   max-width: calc(100% - 10px);
   width: 171vh;
+  height: calc(100% - 10px);
   min-width: 400px;
   box-sizing: border-box;
 }

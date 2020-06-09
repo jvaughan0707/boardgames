@@ -1,21 +1,35 @@
 import React, { Component } from 'reactn';
+import Confetti from 'react-confetti'
 import './skull.css';
 import PlayerTile from './playerTile/playerTile';
 
 class Skull extends Component {
   constructor(props) {
     super(props);
-    this.state = { game: props.game, animate: props.animate, updating: false, betAmount: 0 }
+    this.state = { game: props.game, animate: props.animate, updating: false, betAmount: 0, dimensions: null }
+ 
   }
 
   componentDidMount() {
     const ws = this.global.webSocket;
     ws.on('gameAction', this.onGameAction.bind(this));
+    this.updateWindowDimensions();
+    window.addEventListener('resize', this.updateWindowDimensions);
   }
 
   componentWillUnmount() {
     const ws = this.global.webSocket;
     ws.off('gameAction', this.onGameAction.bind(this));
+    window.removeEventListener('resize', this.updateWindowDimensions);
+  }
+
+  updateWindowDimensions = () => {
+    this.setState({
+      dimensions: {
+        width: this.container.clientWidth,
+        height: this.container.clientHeight,
+      },
+    });
   }
 
   getMinBet(game) {
@@ -135,7 +149,11 @@ class Skull extends Component {
     }
 
     return (
-      <div className="skull-container">
+      <div className="skull-container"  ref={el => (this.container = el)}>
+        {
+          game.finished && this.state.dimensions &&
+          <Confetti width={this.state.dimensions.width} height={this.state.dimensions.height} numberOfPieces={200} recycle={false} />
+        }
         {
           players.map((p, i) =>
             <PlayerTile

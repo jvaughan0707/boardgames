@@ -258,6 +258,7 @@ class SkullService {
 
             if (activePlayers.length == 1) {
               game.finished = true;
+              game.players[0].currentTurn = true;
             }
             else {
               setNextTurnPlayer();
@@ -274,6 +275,11 @@ class SkullService {
             addCheckpoint(false, 2000);
 
             if (currentPlayer.state.public.score == 1) {
+              game.players.forEach(p => {
+                if (p !== currentPlayer) {
+                  p.active = false;
+                }
+              })
               game.finished = true;
             }
             else {
