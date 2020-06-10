@@ -4,19 +4,26 @@ const phases = { playing: 'playing', betting: 'betting', revealing: 'revealing',
 
 class SkullService {
   static createLobby() {
-    return new Lobby({ type: 'skull', title: 'Skull', minPlayers: 2, maxPlayers: 6, players: [] })
+    return new Lobby({ type: 'skull', title: 'Skull', minPlayers: 2, maxPlayers: 12, players: [] })
   }
 
   static initializeGame(game) {
     const colours = ["gold", "blue", "red", "pink", "green", "purple"];
-
+    const playerCount = game.players.length;
     game.state = { public: { phase: phases.playing }, internal: {} };
 
     game.players.forEach((p, i) => {
+      if (i < 6) {
+        var colour = colours[i];
+      }
+      else {
+        var colour = colours[i - Math.ceil((playerCount)/2)];
+      }
+
       var skullIndex = Math.floor(Math.random() * 4);
       var cards = new Array(4).fill(null).map((x, i) => ({ id: i, value: i == skullIndex ? 'skull' : 'flower' }));
       var publicCards = cards.map(c => ({ id: c.id }));
-      p.state.public = { currentTurn: i == 0, score: 0, colour: colours[i], hand: publicCards, playedCards: [], revealedCards: [], currentBet: 0, passed: false };
+      p.state.public = { currentTurn: i == 0, score: 0, colour, hand: publicCards, playedCards: [], revealedCards: [], currentBet: 0, passed: false };
       p.state.private = { hand: cards };
       p.state.internal = { playedCards: [] }
     });
