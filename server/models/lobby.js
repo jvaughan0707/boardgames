@@ -9,7 +9,8 @@ const schema = new mongoose.Schema({
     }
   ],
   minPlayers: Number,
-  maxPlayers: Number
+  maxPlayers: Number,
+  settings: Object
 })
 
 const Lobby = mongoose.model('Lobby', schema);

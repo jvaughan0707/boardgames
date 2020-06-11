@@ -1,10 +1,9 @@
-const Lobby = require('../models/lobby');
 const _ = require('lodash');
 const phases = { playing: 'playing', betting: 'betting', revealing: 'revealing', cleanUp: 'cleanUp' };
 
 class SkullService {
-  static createLobby() {
-    return new Lobby({ type: 'skull', title: 'Skull', minPlayers: 2, maxPlayers: 12, players: [] })
+  static getLobbySettings() {
+    return { type: 'skull', title: 'Skull', minPlayers: 2, maxPlayers: 12, players: [] };
   }
 
   static initializeGame(game) {

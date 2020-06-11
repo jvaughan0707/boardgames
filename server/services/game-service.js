@@ -1,6 +1,7 @@
 const Game = require('../models/game');
 const Lobby = require('../models/lobby');
-const SkullService = require('./skull-service');
+const SkullService = require('../game-types/skull');
+const SpyfallService = require('../game-types/spyfall');
 const _ = require('lodash');
 
 var getLobbyObject = function (doc) {
@@ -34,6 +35,7 @@ var maskGameObject = function (game, playerId) {
   });
   return game;
 }
+
 class GameService {
   static getLobbies(cb) {
     return Lobby.find()
@@ -47,8 +49,39 @@ class GameService {
         .exec();
     }
 
+    var getType = function (type) {
+      switch (type) {
+        case 'skull':
+          return new SkullService(sendGameAction);
+        case 'spyfall':
+          return new SpyfallService(sendGameAction);
+        default:
+          throw 'Invalid type';
+      }
+    }
+
+    var sendGameAction = function(game, stateChain) {
+      stateChain = stateChain || [];
+      game.markModified("state");
+      game.markModified("players");
+      game.save()
+        .then(() =>
+          game.players.forEach(player => {
+            var output = stateChain.map(x =>
+              ({
+                ...x,
+                game: maskGameObject(_.cloneDeep(x.game), player.userId),
+              })
+            );
+            io.to(player.userId).emit(
+              'gameAction',
+              output);
+          })
+        );
+    }
+
     this.getCurrentGame = cb => {
-      return Game.findOne({ players: { $elemMatch: { userId } } })
+      return Game.findOne({ players: { $elemMatch: { userId, active: true } } })
         .exec()
         .then(game => {
           if (game) {
@@ -73,15 +106,7 @@ class GameService {
           }
         })
         .then(() => {
-          switch (type) {
-            case 'skull':
-              var lobby = SkullService.createLobby();
-              break;
-            default:
-              throw 'Invalid type';
-          }
-
-          return lobby.save();
+          return new Lobby(getType(type).getLobbySettings()).save();
         })
         .then(lobby => {
           io.emit('lobbyCreated', getLobbyObject(lobby));
@@ -148,22 +173,33 @@ class GameService {
         .exec()
         .then(game => {
           if (game) {
-            game.players = game.players.filter(p => p.userId !== userId);
-            if (game.players.length > 0) {
-              game.players.forEach(player => {
-                io.to(player.userId).emit('playerQuit', userId);
-              })
-              SkullService.onPlayerQuit(game, userId);
-              game.save();
-            }
-            else {
-              Game.deleteOne({ _id: gameId });
+            var player = game.players.find(p => p.userId == userId);
+
+            if (player) {
+              player.active = false;
+              game.markModified("players");
+
+              var remainingPlayers = game.players.filter(p => p.active);
+
+              if (remainingPlayers.length > 0) {
+                remainingPlayers.forEach(player => {
+                  io.to(player.userId).emit('playerQuit', userId);
+                })
+
+                if (!game.finished) {
+                  getType(game).onPlayerQuit(userId, game);
+                }
+                game.save();
+              }
+              else {
+                Game.deleteOne({ _id: gameId });
+              }
             }
           }
         });
     }
 
-    this.start = lobbyId => {
+    this.start = (lobbyId) => {
       Lobby.findOneAndDelete({ _id: lobbyId })
         .exec()
         .then(lobby => {
@@ -175,7 +211,14 @@ class GameService {
             return;
           }
 
-          var game = new Game({ type: lobby.type, title: lobby.title, players: lobby.players, state: { public: {}, internal: {} }, finished: false })
+          var game = new Game({
+            type: lobby.type,
+            title: lobby.title,
+            players: lobby.players,
+            state: { public: {}, internal: {} },
+            finished: false,
+            settings: lobby.settings
+          })
 
           game.players = _.shuffle(game.players);
 
@@ -184,13 +227,8 @@ class GameService {
             player.state = { public: {}, private: {}, internal: {} };
           });
 
-          switch (game.type) {
-            case 'skull':
-              SkullService.initializeGame(game);
-              break;
-            default:
-              break;
-          }
+          getType(type).initializeGame(game);
+
           game.save()
             .then(() =>
               game.players.forEach(player => {
@@ -214,38 +252,12 @@ class GameService {
           }
 
           if (!currentPlayer.active) {
-            onError('You are not currently ative in this game')
+            onError('You are not currently active in this game')
             return;
           }
-
-          var onSuccess = stateChain => {
-            stateChain = stateChain || [];
-            game.markModified("state");
-            game.markModified("players");
-            game.save()
-              .then(() =>
-                game.players.forEach(player => {
-                  var output = stateChain.map(x =>
-                    ({
-                      ...x,
-                      game: maskGameObject(_.cloneDeep(x.game), player.userId),
-                    })
-                  );
-                  io.to(player.userId).emit(
-                    'gameAction',
-                    output);
-                })
-              );
-          }
-
+         
           onError = onError || (() => null);
-          switch (game.type) {
-            case "skull":
-              SkullService.validateAction(currentPlayer, game, type, data, onSuccess, onError);
-              break;
-            default:
-              return;
-          }
+          getType(type).validateAction(currentPlayer, game, type, data, onError);
         })
     }
   }
