@@ -45,9 +45,7 @@ class App extends Component {
         }
 
         <Auth>
-          <div className="page">
-            <Routes />
-          </div>
+          <Routes />
         </Auth>
       </>
     );

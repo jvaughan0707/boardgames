@@ -113,39 +113,34 @@ class Skull extends Component {
     var betAmount = Math.max(this.state.betAmount, minBet);
 
     var actionText = user.state.currentTurn ? 'You' : currentTurnPlayer.displayName;
-    if (game.finished) {
-      actionText += ` win${user.state.currentTurn ? '' : 's'} the game!`
+    if (playingPhase) {
+      actionText += ' must play a card';
+      if (currentTurnPlayer.state.playedCards.length > 0) {
+        actionText += ' or place a bet';
+      }
     }
-    else {
-      if (playingPhase) {
-        actionText += ' must play a card';
-        if (currentTurnPlayer.state.playedCards.length > 0) {
-          actionText += ' or place a bet';
-        }
+    else if (bettingPhase) {
+      actionText += ' must raise or pass';
+    }
+    else if (revealingPhase) {
+      if (game.players.some(p => p.state.revealedCards.some(c => c.value === 'skull'))) {
+        actionText += user.state.currentTurn ? ' have revealed a skull and lose one of your cards' :
+          ' has revealed a skull and loses one of their cards'
       }
-      else if (bettingPhase) {
-        actionText += ' must raise or pass';
-      }
-      else if (revealingPhase) {
-        if (game.players.some(p => p.state.revealedCards.some(c => c.value === 'skull'))) {
-          actionText += user.state.currentTurn ? ' have revealed a skull and lose one of your cards' :
-            ' has revealed a skull and loses one of their cards'
+      else {
+        var remainingCards = currentTurnPlayer.state.currentBet - game.players.reduce((t, p) => t + p.state.revealedCards.length, 0);
+
+        if (remainingCards > 0) {
+          actionText += ` must reveal ${remainingCards} more card${remainingCards > 1 ? 's' : ''}`;
         }
         else {
-          var remainingCards = currentTurnPlayer.state.currentBet - game.players.reduce((t, p) => t + p.state.revealedCards.length, 0);
-
-          if (remainingCards > 0) {
-            actionText += ` must reveal ${remainingCards} more card${remainingCards > 1 ? 's' : ''}`;
-          }
-          else {
-            actionText += user.state.currentTurn ? ' have acheived your bet and score a point'
-              : ' has acheived their bet and scores a point'
-          }
+          actionText += user.state.currentTurn ? ' have acheived your bet and score a point'
+            : ' has acheived their bet and scores a point'
         }
       }
-      else if (cleanUp) {
-        actionText = 'Preparing for next round...'
-      }
+    }
+    else if (cleanUp) {
+      actionText = 'Preparing for next round...'
     }
 
     return (

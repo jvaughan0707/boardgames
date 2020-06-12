@@ -15,10 +15,9 @@ class PlayerTile extends Component {
     var playingPhase = game.state.phase === "playing";
     var bettingPhase = game.state.phase === "betting";
     var revealingPhase = game.state.phase === "revealing";
+    var className = `player-tile ${this.props.playerIsUser ? 'primary' : ''} ${player.state.currentTurn ? 'current-turn' : ''} ${player.active ? '' : 'inactive'}`
     return (
-      <div className={`player-tile ${this.props.playerIsUser ? 'primary' : ''} ${player.state.currentTurn ? 'current-turn' : ''}`} 
-        style={this.props.style}>
-        
+      <div className={className} style={this.props.style}>
         <div className="player-tile-inner">
           <h3>{player.displayName}</h3>
           {
