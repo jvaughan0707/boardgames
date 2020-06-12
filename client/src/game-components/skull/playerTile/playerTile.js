@@ -78,7 +78,7 @@ class PlayerTile extends Component {
                   className='card'
                   animated={this.props.animate}
                   posX={this.props.playerIsUser ? 10 + index * 112 : 5 + index * 20}
-                  posY={this.props.playerIsUser ? 105 : 5}
+                  posY={this.props.playerIsUser ? 110 : 5}
                   rotateY={this.props.playerIsUser ? 0 : -180}
                   zIndex={12 - index} />
               ),
