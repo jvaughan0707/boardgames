@@ -49,12 +49,12 @@ class GameService {
         .exec();
     }
 
-    var getType = function (type) {
-      switch (type) {
+    var getType = function (game) {
+      switch (game.type) {
         case 'skull':
-          return new SkullService();
+          return new SkullService(game);
         case 'spyfall':
-          return new SpyfallService();
+          return new SpyfallService(game);
         default:
           throw 'Invalid type';
       }
@@ -99,7 +99,7 @@ class GameService {
           })
 
           if (!game.finished) {
-            var stateChain = getType(game).onPlayerQuit(userId, game);
+            var stateChain = getType(game).onPlayerQuit(userId);
             saveAndEmit(game, stateChain);
           }
           else {
@@ -138,7 +138,7 @@ class GameService {
           }
         })
         .then(() => {
-          return new Lobby({...getType(type).getLobbySettings(), rematchId}).save();
+          return new Lobby({...getType({type}).getLobbySettings(), rematchId}).save();
         })
         .then(lobby => {
           io.emit('lobbyCreated', getLobbyObject(lobby));
@@ -256,7 +256,7 @@ class GameService {
             player.state = { public: {}, private: {}, internal: {} };
           });
 
-          getType(lobby.type).initializeGame(game);
+          getType(game).initializeGame();
 
           game.save()
             .then(() =>
@@ -267,7 +267,7 @@ class GameService {
         });
     }
 
-    this.validateAction = (gameId, type, data, onError) => {
+    this.validateAction = (gameId, action, data, onError) => {
       getById(gameId)
         .then(game => {
           if (!game) {
@@ -286,7 +286,7 @@ class GameService {
           }
 
           onError = onError || (() => null);
-          var stateChain = getType(type).validateAction(currentPlayer, game, type, data, onError);
+          var stateChain = getType(game).validateAction(currentPlayer, action, data, onError);
           saveAndEmit(game, stateChain);
         })
     }

@@ -1,7 +1,8 @@
 import React, { Component } from 'reactn';
 import './create.css';
 const skullImg = require('../../resources/skull/title.png');
-const games = [{ type: "skull", title: "Skull", img: skullImg }]
+const spyfallImg = require('../../resources/spyfall/title.png');
+const games = [{ type: "skull", title: "Skull", img: skullImg }, { type: "spyfall", title: "Spyfall", img: spyfallImg }]
 
 class Create extends Component {
   createLobby = (type) => {

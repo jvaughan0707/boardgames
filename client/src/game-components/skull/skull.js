@@ -1,13 +1,13 @@
 import React, { Component } from 'reactn';
-import Confetti from 'react-confetti'
 import './skull.css';
 import PlayerTile from './playerTile/playerTile';
+import Finish from './finish/finish';
 
 class Skull extends Component {
   constructor(props) {
     super(props);
-    this.state = { game: props.game, animate: props.animate, updating: false, betAmount: 0, dimensions: null }
- 
+    this.state = { animate: props.animate, updating: false, betAmount: 0, dimensions: null }
+
   }
 
   componentDidMount() {
@@ -45,8 +45,8 @@ class Skull extends Component {
     var setNext = () => {
       let { game, animate, pause } = stateChain.shift();
       if (game) {
-        this.setState({ updating: true, game, animate: animate && this.props.animate });
-
+        this.setState({ updating: true, animate: animate && this.props.animate });
+        this.setGlobal({ game })
         if (stateChain.length > 0) {
           setTimeout(() => {
             setNext();
@@ -63,7 +63,7 @@ class Skull extends Component {
   }
 
   getTilePosition(i) {
-    var playerCount = this.state.game.players.length;
+    var playerCount = this.global.game.players.length;
     var x = 0;
     var y = 0
 
@@ -87,7 +87,7 @@ class Skull extends Component {
 
   sendMove = (type, data) => {
     if (!this.state.updating) {
-      this.global.webSocket.emit("gameAction", this.state.game.gameId, type, data, error => console.log(error));
+      this.global.webSocket.emit("gameAction", this.global.game.gameId, type, data, error => console.log(error));
     }
   }
 
@@ -95,7 +95,7 @@ class Skull extends Component {
     this.setState({ betAmount: event.target.value })
 
   render() {
-    var game = this.state.game;
+    var game = this.global.game;
     var players = game.players;
     var maxBet = Math.max(this.getMaxBet(game), 1);
     var minBet = Math.min(this.getMinBet(game), maxBet);
@@ -104,7 +104,7 @@ class Skull extends Component {
     var currentTurnPlayer = players.find(p => p.state.currentTurn);
     players = [...players.slice(userIndex), ...players.slice(0, userIndex)];
 
-    var playingPhase = this.state.game.state.phase === "playing";
+    var playingPhase = this.global.game.state.phase === "playing";
     var bettingPhase = game.state.phase === "betting";
     var revealingPhase = game.state.phase === "revealing";
     var cleanUp = game.state.phase === "cleanUp";
@@ -149,49 +149,50 @@ class Skull extends Component {
     }
 
     return (
-      <div className="skull-container"  ref={el => (this.container = el)}>
+      <>
         {
           game.finished && this.state.dimensions &&
-          <Confetti width={this.state.dimensions.width} height={this.state.dimensions.height} numberOfPieces={200} recycle={false} />
+          <Finish />
         }
-        {
-          players.map((p, i) =>
-            <PlayerTile
-              style={{ transform: this.getTilePosition(i) }}
-              key={p.userId}
-              game={this.state.game}
-              player={p}
-              user={user}
-              playerIsUser={i === 0}
-              sendMove={this.sendMove}
-              animate={this.state.animate}
-              updating={this.state.updating} />)
-        }
-        <div className="panel left">
-          <div id="controls">
-            <button onClick={() => this.sendMove("bet", betAmount)} disabled={!canBet}>
-              Bet
+        <div className="skull-container" ref={el => (this.container = el)}>
+          {
+            players.map((p, i) =>
+              <PlayerTile
+                style={{ transform: this.getTilePosition(i) }}
+                key={p.userId}
+                player={p}
+                user={user}
+                playerIsUser={i === 0}
+                sendMove={this.sendMove}
+                animate={this.state.animate}
+                updating={this.state.updating} />)
+          }
+          <div className="panel left">
+            <div id="controls" className="centered">
+              <button onClick={() => this.sendMove("bet", betAmount)} disabled={!canBet}>
+                Bet
             </button>
-            <input
-              type="number"
-              min={minBet}
-              max={maxBet}
-              disabled={!canBet}
-              value={betAmount}
-              onChange={this.onBetAmountChange}>
-            </input>
-            <br />
-            <button disabled={!user.state.currentTurn || !bettingPhase}
-              onClick={() => this.sendMove("pass", null)}>Pass
+              <input
+                type="number"
+                min={minBet}
+                max={maxBet}
+                disabled={!canBet}
+                value={betAmount}
+                onChange={this.onBetAmountChange}>
+              </input>
+              <br />
+              <button disabled={!user.state.currentTurn || !bettingPhase}
+                onClick={() => this.sendMove("pass", null)}>Pass
             </button>
+            </div>
+          </div>
+          <div className="panel right">
+            <div className="centered">
+              {actionText}
+            </div>
           </div>
         </div>
-        <div className="panel right">
-          <div>
-            {actionText}
-          </div>
-        </div>
-      </div>
+      </>
     )
   }
 }

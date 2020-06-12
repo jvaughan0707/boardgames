@@ -12,17 +12,10 @@ class Play extends Component {
     }
   }
 
-  quit() {
-    //prompt are you sure?
-    const ws = this.global.webSocket;
-    ws.emit('quit', this.props.game.gameId);
-  }
-
   render() {
-    var game = this.props.game;
+    var game = this.global.game;
     return (
       <>
-        {/* <button onClick={this.quit.bind(this)}>Quit</button> */}
         {this.getGameComponent(game)}
       </>
     )

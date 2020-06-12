@@ -1,5 +1,5 @@
 class SpyfallService {
-  constructor () {
+  constructor (game) {
     var stateChain = [];
 
     var addCheckpoint = (animate, pause) => stateChain.push({ game: game.toObject(), animate, pause })
@@ -7,7 +7,7 @@ class SpyfallService {
     this.getLobbySettings = () =>
       ({ type: 'spyfall', title: 'Spyfall', minPlayers: 4, maxPlayers: 12, players: [] })
 
-    this.initializeGame = (game) => {
+    this.initializeGame = () => {
       game.settings = game.settings || {};
       const locationCount = Math.max(game.settings.locationCount || 25, locations.length);
       const spyCount = game.settings.spyCount || 1;
@@ -46,13 +46,13 @@ class SpyfallService {
       };
     }
 
-    this.onPlayerQuit = (game) => {
+    this.onPlayerQuit = () => {
       game.finished = true;
       addCheckpoint(false);
       return stateChain;
     }
 
-    this.validateAction = (currentPlayer, game, type, data, onError) => {
+    this.validateAction = (currentPlayer, action, data, onError) => {
       var pause = () => {
         var timerFrom = new Date();
         var remainingTime = game.remainingTime - timerFrom + game.timerFrom;
@@ -73,7 +73,7 @@ class SpyfallService {
         }
       }
 
-      switch (type) {
+      switch (action) {
         case "nominate":
           if (game.state.public.paused) {
             onError("Timer is already paused, you must wait before you can nominate a player");

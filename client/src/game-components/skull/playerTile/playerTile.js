@@ -5,7 +5,7 @@ const images = require.context('../../../resources/skull', true);
 
 class PlayerTile extends Component {
    render() {
-    var game = this.props.game;
+    var game = this.global.game;
     var player = this.props.player;
     var user = this.props.user;
     var colour = player.state.colour;

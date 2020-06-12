@@ -5,8 +5,9 @@
 }
 
 #game-tiles {
-  display: flex;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 170px);
   margin-bottom: 20px;
 }
 
@@ -28,6 +29,7 @@
 
 .game-tile {
   width: 150px;
+  margin: 0 10px;
 }
 
 .game-tile:enabled {

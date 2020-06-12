@@ -6,7 +6,7 @@ import Loading from '../loading/loading';
 class Home extends Component {
   constructor() {
     super();
-    this.state = { loading: true, game: null }
+    this.state = { loading: true }
   }
 
   componentDidMount() {
@@ -14,9 +14,10 @@ class Home extends Component {
     ws.on('gameStarted', this.onGameStarted.bind(this));
     ws.on('gameEnded', this.onGameEnded.bind(this));
 
-    ws.emit('getCurrentGame', game =>
-      this.setState({ game, loading: false })
-    );
+    ws.emit('getCurrentGame', game => {
+      this.setGlobal({ game });
+      this.setState({ loading: false });
+    });
   }
 
   componentWillUnmount() {
@@ -26,19 +27,18 @@ class Home extends Component {
   }
 
   onGameStarted(game) {
-    this.setState({ game, loading: false });
+    this.setGlobal({ game });
   }
 
   onGameEnded() {
-    this.setState({ game: null })
+    this.setGlobal({ game: null })
   }
 
   render() {
-    var game = this.state.game;
     return (
       this.state.loading ? <Loading /> :
-        game ? <Play game={game} /> :
-          <Lobbies allowJoin={game === null} />
+        this.global.game ? <Play /> :
+          <Lobbies />
     );
   }
 }

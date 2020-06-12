@@ -2,7 +2,7 @@ const _ = require('lodash');
 const phases = { playing: 'playing', betting: 'betting', revealing: 'revealing', cleanUp: 'cleanUp' };
 
 class SkullService {
-  constructor() {
+  constructor(game) {
     var stateChain = [];
 
     var addCheckpoint = (animate, pause) => stateChain.push({ game: game.toObject(), animate, pause })
@@ -62,7 +62,7 @@ class SkullService {
     this.getLobbySettings = () =>
       ({ type: 'skull', title: 'Skull', minPlayers: 2, maxPlayers: 12, players: [] });
 
-    this.initializeGame = (game) => {
+    this.initializeGame = () => {
       const colours = ["gold", "blue", "red", "pink", "green", "purple"];
       const playerCount = game.players.length;
       game.state = { public: { phase: phases.playing }, internal: {} };
@@ -84,7 +84,7 @@ class SkullService {
       });
     }
 
-    this.onPlayerQuit = (game, userId) => {
+    this.onPlayerQuit = (userId) => {
       var currentPlayer = game.players.find(p => p.userId == userId);
       currentPlayer.state.public.isAlive = false;
       currentPlayer.state.public.currentBet = 0;
@@ -120,13 +120,13 @@ class SkullService {
       return stateChain;
     }
 
-    this.validateAction = (currentPlayer, game, type, data, onError) => {
+    this.validateAction = (currentPlayer, action, data, onError) => {
       if (!currentPlayer.state.public.currentTurn) {
         onError('Its not your turn');
         return;
       }
 
-      switch (type) {
+      switch (action) {
         case "playCard":
           if (game.state.public.phase !== phases.playing) {
             onError('You cannot play cards at this time')

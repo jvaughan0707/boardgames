@@ -15,13 +15,3 @@
 #header-buttons > * {
   margin: 0 10px;
 }
-
-#dev-buttons:hover {
-  opacity: 100%;
-}
-
-#dev-buttons {
-  opacity: 0;
-  width: 300px;
-  float: left;
-}

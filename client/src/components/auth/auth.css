@@ -1,9 +1,4 @@
-.pre-auth {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-
+#pre-auth {
   width: 300px;
   height: 30px;
   border-radius: 10px;
@@ -11,7 +6,7 @@
   background-color: white;
 }
 
-.pre-auth input {
+#pre-auth input {
   font-size: 20px;
   border: none;
   outline: 0;

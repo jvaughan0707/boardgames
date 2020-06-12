@@ -16,8 +16,15 @@ class Lobbies extends Component {
     ws.on('lobbyPlayerJoined', this.onLobbyPlayerJoined.bind(this));
     ws.on('lobbyPlayerLeft', this.onLobbyPlayerLeft.bind(this));
 
-    ws.emit('getOpenLobbies', lobbies =>
-      this.setState({ lobbies, loading: false, inLobby: lobbies.some(lobby => lobby.players.some(p => p.userId === this.global.user.userId)) }));
+    ws.emit('getOpenLobbies', lobbies => {
+      var usersLobby = lobbies.find(lobby => lobby.players.some(p => p.userId === this.global.user.userId));
+
+      if (usersLobby) {
+        lobbies = lobbies.sort((a, b) => a === usersLobby ? -1 : 1);
+      }
+
+      this.setState({ lobbies, loading: false, inLobby: !!usersLobby });
+    });
   }
 
   componentWillUnmount() {

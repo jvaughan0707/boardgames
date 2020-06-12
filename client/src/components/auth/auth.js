@@ -60,7 +60,7 @@ class Auth extends PureComponent {
       this.state.userValidated ?
         (this.global.user && this.global.user.displayName ?
           this.props.children :
-          <div className="pre-auth">
+          <div id="pre-auth" className="centered">
             <input maxLength="15" type="text" onChange={this.handleChange.bind(this)} name="displayName" placeholder="Enter a username"></input>
             <span id="submit">
               <FontAwesomeIcon icon="arrow-right" onClick={this.createUser.bind(this)} disabled={this.state.displayName.length === 0} />
