@@ -96,21 +96,21 @@ class Skull extends Component {
 
   render() {
     var game = this.global.game;
+    var playingPhase = game.state.phase === "playing";
+    var bettingPhase = game.state.phase === "betting";
+    var revealingPhase = game.state.phase === "revealing";
+    var cleanUp = game.state.phase === "cleanUp";
+
     var players = game.players;
-    var maxBet = Math.max(this.getMaxBet(game), 1);
-    var minBet = Math.min(this.getMinBet(game), maxBet);
+    var maxBet = revealingPhase ? Infinity : Math.max(this.getMaxBet(game), 1);
+    var minBet = revealingPhase ? 0 : Math.min(this.getMinBet(game), maxBet);
     var userIndex = players.findIndex(p => p.userId === this.global.user.userId);
     var user = players[userIndex];
     var currentTurnPlayer = players.find(p => p.state.currentTurn);
     players = [...players.slice(userIndex), ...players.slice(0, userIndex)];
 
-    var playingPhase = this.global.game.state.phase === "playing";
-    var bettingPhase = game.state.phase === "betting";
-    var revealingPhase = game.state.phase === "revealing";
-    var cleanUp = game.state.phase === "cleanUp";
-
     var canBet = user.state.currentTurn && user.state.playedCards.length > 0 && (playingPhase || bettingPhase);
-    var betAmount = Math.max(this.state.betAmount, minBet);
+    var betAmount = Math.min(Math.max(this.state.betAmount, minBet), maxBet);
 
     var actionText = user.state.currentTurn ? 'You' : currentTurnPlayer.displayName;
     if (playingPhase) {
