@@ -4,6 +4,7 @@
   height: calc(100% - 10px);
   min-width: 400px;
   box-sizing: border-box;
+  margin: 5px;
 }
 
 @media only screen and (min-width: 651px) {
@@ -12,20 +13,24 @@
     top: 0;
     left: 50%;
     transform: translateX(-50%);
-    margin: 5px;
   }
 }
 @media only screen and (max-width: 650px) {
   .skull-container .panel.left {
     position: initial;
+    padding: 0;
+  }
+
+  .skull-container {
+    padding-top: 30px;
   }
 
   .skull-container #controls {
     background: none;
     border: none;
     position: absolute;
-    top: 35px;
-    left: 15px;
+    top: 40px;
+    left: 10px;
     transform: none;
     box-shadow: none;
   }
