@@ -4,14 +4,43 @@ import './playerTile.css';
 const images = require.context('../../../resources/skull', true);
 
 class PlayerTile extends Component {
-   render() {
+  componentDidMount() {
+    this.colour = this.props.player.state.colour;
+    this.cardBack = images('./' + this.colour + '_back.png');
+    this.baseFront = images('./' + this.colour + '_base_front.png');
+    this.baseBack = images('./' + this.colour + '_base_back.png');
+    this.skull = images('./' + this.colour + '_skull.png');
+    this.flower = images('./' + this.colour + '_flower.png');
+
+    switch (this.colour) {
+      case 'gold':
+        this.tileColour = '#a37131'
+        break;
+      case 'red':
+        this.tileColour = '#944245';
+        break;
+      case 'blue':
+        this.tileColour = '#173753';
+        break;
+      case 'purple':
+        this.tileColour = '#c56ff1'
+        break;
+      case 'green':
+        this.tileColour = '#135418';
+        break;
+      case 'pink':
+        this.tileColour = '#bd0202'
+        break;
+      default: this.tileColour = '#222';
+        break;
+    }
+  }
+
+  render() {
     var game = this.global.game;
     var player = this.props.player;
     var user = this.props.user;
-    var colour = player.state.colour;
-    var cardBack = images('./' + colour + '_back.png');
-    var baseFront = images('./' + colour + '_base_front.png');
-    var baseBack = images('./' + colour + '_base_back.png');
+
     var playingPhase = game.state.phase === "playing";
     var bettingPhase = game.state.phase === "betting";
     var revealingPhase = game.state.phase === "revealing";
@@ -28,9 +57,9 @@ class PlayerTile extends Component {
                 'I bet ' + player.state.currentBet}
             </div>
           }
-          <Tile frontImg={baseFront}
-            backImg={baseBack}
-            colour={player.state.score === 1 ? this.getTileColour(colour) : '#222'}
+          <Tile frontImg={this.baseFront}
+            backImg={this.baseBack}
+            colour={player.state.score === 1 ? this.tileColour : '#222'}
             posX={this.props.playerIsUser ? 135 : 150}
             posY={-5}
             rotateX={55}
@@ -42,9 +71,9 @@ class PlayerTile extends Component {
             [
               ...player.state.hand.map((card, index) =>
                 <Tile key={card.id}
-                  colour={this.getTileColour(colour)}
-                  frontImg={this.getCardImg(card, colour)}
-                  backImg={cardBack}
+                  colour={this.tileColour}
+                  frontImg={this.getCardImg(card)}
+                  backImg={this.cardBack}
                   click={playingPhase && this.props.playerIsUser && player.state.currentTurn ? () => this.props.sendMove("playCard", card.id) : null}
                   className='card'
                   animated={this.props.animate}
@@ -55,11 +84,11 @@ class PlayerTile extends Component {
               ),
               ...player.state.playedCards.map((card, index) =>
                 <Tile key={card.id}
-                  colour={this.getTileColour(colour)}
-                  frontImg={this.getCardImg(card, colour)}
-                  backImg={cardBack}
+                  colour={this.tileColour}
+                  frontImg={this.getCardImg(card)}
+                  backImg={this.cardBack}
                   click={revealingPhase && user.state.currentTurn && (this.props.playerIsUser || user.state.playedCards.length === 0) ? () => this.props.sendMove("revealCard", player.userId) : null}
-                  posX={this.props.playerIsUser ? 177: 195}
+                  posX={this.props.playerIsUser ? 177 : 195}
                   posY={2 - index * 7}
                   rotateX={55}
                   rotateY={-180}
@@ -69,15 +98,15 @@ class PlayerTile extends Component {
               ),
               ...player.state.revealedCards.map((card, index) =>
                 <Tile key={card.id}
-                  colour={this.getTileColour(colour)}
-                  frontImg={this.getCardImg(card, colour)}
-                  backImg={cardBack}
+                  colour={this.tileColour}
+                  frontImg={this.getCardImg(card)}
+                  backImg={this.cardBack}
                   className="card"
                   animated={this.props.animate}
                   posX={330}
                   posY={15 - index * 7}
                   rotateX={55}
-                  zIndex={index }/>
+                  zIndex={index} />
               )
             ].sort((a, b) => a.key - b.key)
           }
@@ -86,26 +115,13 @@ class PlayerTile extends Component {
     );
   }
 
-  getCardImg(card, colour) {
-    var img = null;
+  getCardImg(card) {
     if (card.value === 'skull') {
-      img = images('./' + colour + '_skull.png');
+      return this.skull;
     } else if (card.value === 'flower') {
-      img = images('./' + colour + '_flower.png');
+      return this.flower;
     }
-    return img;
-  }
-
-  getTileColour(playerColour) {
-    switch (playerColour) {
-      case 'gold': return '#a37131';
-      case 'red': return '#944245';
-      case 'blue': return '#173753';
-      case 'purple': return '#c56ff1'
-      case 'green': return '#135418';
-      case 'pink': return '#bd0202'
-      default: return '#222';
-    }
+    return null;
   }
 }
 
