@@ -10,7 +10,8 @@ const schema = new mongoose.Schema({
   ],
   minPlayers: Number,
   maxPlayers: Number,
-  settings: Object
+  settings: Object,
+  rematchId: String
 })
 
 const Lobby = mongoose.model('Lobby', schema);

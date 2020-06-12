@@ -52,32 +52,64 @@ class GameService {
     var getType = function (type) {
       switch (type) {
         case 'skull':
-          return new SkullService(sendGameAction);
+          return new SkullService();
         case 'spyfall':
-          return new SpyfallService(sendGameAction);
+          return new SpyfallService();
         default:
           throw 'Invalid type';
       }
     }
 
-    var sendGameAction = function(game, stateChain) {
+    var saveAndEmit = function (game, stateChain) {
       stateChain = stateChain || [];
       game.markModified("state");
       game.markModified("players");
       game.save()
-        .then(() =>
+        .then(() => {
           game.players.forEach(player => {
-            var output = stateChain.map(x =>
-              ({
-                ...x,
-                game: maskGameObject(_.cloneDeep(x.game), player.userId),
-              })
-            );
-            io.to(player.userId).emit(
-              'gameAction',
-              output);
+            if (player.active) {
+              var output = stateChain.map(x =>
+                ({
+                  ...x,
+                  game: maskGameObject(_.cloneDeep(x.game), player.userId),
+                })
+              );
+              io.to(player.userId).emit(
+                'gameAction',
+                output);
+            }
+          });
+          stateChain.length = 0;
+        });
+    }
+
+    var quit = game => {
+      io.to(userId).emit('gameEnded');
+      var player = game.players.find(p => p.userId == userId);
+
+      if (player) {
+        player.active = false;
+        game.markModified("players");
+
+        var remainingPlayers = game.players.filter(p => p.active);
+
+        if (remainingPlayers.length > 0) {
+          remainingPlayers.forEach(player => {
+            io.to(player.userId).emit('playerQuit', userId);
           })
-        );
+
+          if (!game.finished) {
+            var stateChain = getType(game).onPlayerQuit(userId, game);
+            saveAndEmit(game, stateChain);
+          }
+          else {
+            game.save();
+          }
+        }
+        else {
+          game.remove();
+        }
+      }
     }
 
     this.getCurrentGame = cb => {
@@ -93,7 +125,7 @@ class GameService {
         });
     }
 
-    this.create = (type, displayName) => {
+    this.create = (type, displayName, rematchId) => {
       if (!displayName || displayName.length > 15) {
         throw 'Invalid display name';
       }
@@ -106,7 +138,7 @@ class GameService {
           }
         })
         .then(() => {
-          return new Lobby(getType(type).getLobbySettings()).save();
+          return new Lobby({...getType(type).getLobbySettings(), rematchId}).save();
         })
         .then(lobby => {
           io.emit('lobbyCreated', getLobbyObject(lobby));
@@ -115,6 +147,26 @@ class GameService {
         .catch(reason => {
 
         })
+    }
+
+    this.rematch = (gameId, displayName) => {
+      Game.findById(gameId)
+      .exec()
+      .then(game => {
+        if (game) {
+          quit(game);
+          Lobby.findOne({ rematchId: gameId })
+          .exec()
+          .then(lobby => {
+            if (lobby) {
+              this.join(lobby._id.toString(), displayName);
+            }
+            else {
+              this.create(game.type, displayName, gameId)
+            }
+          });
+        }
+      });
     }
 
     this.join = (lobbyId, displayName) => {
@@ -143,7 +195,6 @@ class GameService {
             throw 'Unable to join lobby'
           }
         })
-
         .catch(reason => {
 
         });
@@ -168,33 +219,11 @@ class GameService {
     }
 
     this.quit = gameId => {
-      io.to(userId).emit('gameEnded')
       Game.findById(gameId)
         .exec()
         .then(game => {
           if (game) {
-            var player = game.players.find(p => p.userId == userId);
-
-            if (player) {
-              player.active = false;
-              game.markModified("players");
-
-              var remainingPlayers = game.players.filter(p => p.active);
-
-              if (remainingPlayers.length > 0) {
-                remainingPlayers.forEach(player => {
-                  io.to(player.userId).emit('playerQuit', userId);
-                })
-
-                if (!game.finished) {
-                  getType(game).onPlayerQuit(userId, game);
-                }
-                game.save();
-              }
-              else {
-                Game.deleteOne({ _id: gameId });
-              }
-            }
+            quit(game);
           }
         });
     }
@@ -227,7 +256,7 @@ class GameService {
             player.state = { public: {}, private: {}, internal: {} };
           });
 
-          getType(type).initializeGame(game);
+          getType(lobby.type).initializeGame(game);
 
           game.save()
             .then(() =>
@@ -255,9 +284,10 @@ class GameService {
             onError('You are not currently active in this game')
             return;
           }
-         
+
           onError = onError || (() => null);
-          getType(type).validateAction(currentPlayer, game, type, data, onError);
+          var stateChain = getType(type).validateAction(currentPlayer, game, type, data, onError);
+          saveAndEmit(game, stateChain);
         })
     }
   }

@@ -25,6 +25,8 @@ module.exports = (server) => {
 
         ws.on('createLobby', gameService.create);
 
+        ws.on('rematch', gameService.rematch);
+
         ws.on('joinLobby', gameService.join);
 
         ws.on('leaveLobby', gameService.leaveLobby);

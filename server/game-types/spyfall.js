@@ -1,180 +1,184 @@
 class SpyfallService {
-  static getLobbySettings() {
-    return { type: 'spyfall', title: 'Spyfall', minPlayers: 4, maxPlayers: 12, players: [] };
-  }
-
-  static initializeGame(game) {
-    game.settings = game.settings || {};
-    const locationCount = Math.max(game.settings.locationCount || 25, locations.length);
-    const spyCount = game.settings.spyCount || 1;
-    const time = game.setttings.time || 60;
-    locations = _shuffle(locations).slice(0, locationCount);
-
-    var location = locations[Math.floor(Math.random() * locationCount)];
-
-    var roles = _.shuffle(location.roles);
-
-    _.shuffle(game.players).forEach((p, i) => {
-      spy = i < spyCount;
-      p.state.public = {
-        accusers: [],
-        canNominate: true,
-        vote: null
-      };
-      p.state.private = {
-        spy,
-        locationId: spy ? null : location.id,
-        role: spy ? null : roles[i - spyCount]
-      };
-    });
-
-    game.state = {
-      public: {
-        locations: locations.map(l => ({ id: l.id, name: l.name })),
-        spyCount,
-        timerFrom: new Date(),
-        remainingTime: time,
-        paused: false,
-      },
-      internal: {
-        locationId: location.id
-      }
-    };
-  }
-
-  static onPlayerQuit(game, userId) {
-
-  }
-
-  static validateAction(currentPlayer, game, type, data, onSuccess, onError) {
+  constructor () {
     var stateChain = [];
 
     var addCheckpoint = (animate, pause) => stateChain.push({ game: game.toObject(), animate, pause })
 
-    var pause = () => {
-      var timerFrom = new Date();
-      var remainingTime = game.remainingTime - timerFrom + game.timerFrom;
-      game.state.public = {
-        ...game.state.public,
-        paused: true,
-        timerFrom,
-        remainingTime,
-      }
+    this.getLobbySettings = () =>
+      ({ type: 'spyfall', title: 'Spyfall', minPlayers: 4, maxPlayers: 12, players: [] })
+
+    this.initializeGame = (game) => {
+      game.settings = game.settings || {};
+      const locationCount = Math.max(game.settings.locationCount || 25, locations.length);
+      const spyCount = game.settings.spyCount || 1;
+      const time = game.setttings.time || 60;
+      locations = _shuffle(locations).slice(0, locationCount);
+
+      var location = locations[Math.floor(Math.random() * locationCount)];
+
+      var roles = _.shuffle(location.roles);
+
+      _.shuffle(game.players).forEach((p, i) => {
+        spy = i < spyCount;
+        p.state.public = {
+          accusers: [],
+          canNominate: true,
+          vote: null
+        };
+        p.state.private = {
+          spy,
+          locationId: spy ? null : location.id,
+          role: spy ? null : roles[i - spyCount]
+        };
+      });
+
+      game.state = {
+        public: {
+          locations: locations.map(l => ({ id: l.id, name: l.name })),
+          spyCount,
+          timerFrom: new Date(),
+          remainingTime: time,
+          paused: false,
+        },
+        internal: {
+          locationId: location.id
+        }
+      };
     }
 
-    var unpause = () => {
-      var timerFrom = new Date();
-      game.state.public = {
-        ...game.state.public,
-        paused: false,
-        timerFrom,
-      }
+    this.onPlayerQuit = (game) => {
+      game.finished = true;
+      addCheckpoint(false);
+      return stateChain;
     }
 
-    switch (type) {
-      case "nominate":
-        if (game.state.public.paused) {
-          onError("Timer is already paused, you must wait before you can nominate a player");
-          return;
+    this.validateAction = (currentPlayer, game, type, data, onError) => {
+      var pause = () => {
+        var timerFrom = new Date();
+        var remainingTime = game.remainingTime - timerFrom + game.timerFrom;
+        game.state.public = {
+          ...game.state.public,
+          paused: true,
+          timerFrom,
+          remainingTime,
         }
+      }
 
-        if (!currentPlayer.state.public.canNominate) {
-          onError("You have already nominated a player this round");
-          return;
+      var unpause = () => {
+        var timerFrom = new Date();
+        game.state.public = {
+          ...game.state.public,
+          paused: false,
+          timerFrom,
         }
+      }
 
-        var targetPlayer = game.players.find(p.userId == data);
-
-        if (!targetPlayer) {
-          onError("Target player not found");
-        }
-
-        pause();
-        game.state.public.nominatedPlayer = data;
-
-        currentPlayer.state.public.vote = true;
-        targetPlayer.state.public.accusers.push(currentPlayer.userId);
-
-        break;
-      case "vote":
-        if (!game.state.public.paused || !game.state.public.nominatedPlayer) {
-          onError("There is no vote in progress");
-          return;
-        }
-
-        if (currentPlayer.state.public.vote !== null) {
-          onError("You have already cast your vote");
-          return;
-        }
-
-        currentPlayer.state.public.vote = data;
-
-        if (game.players.every(p => p.state.public.vote !== null)) {
-          if (game.players.filter(p => !p.state.public.vote).length <= game.state.public.spyCount) {
-            var targetPlayer = game.players.find(p => p.userId == game.state.public.nominatedPlayer)
-            if (targetPlayer.state.private.spy) {
-
-            }
+      switch (type) {
+        case "nominate":
+          if (game.state.public.paused) {
+            onError("Timer is already paused, you must wait before you can nominate a player");
+            return;
           }
-          else {
-            game.players.forEach(p => p.state.public.vote = null);
 
-            if (game.state.public.remainingTime <= 0) {
-              var index = game.players.findIndex(p => p.userId == game.state.public.nominatedPlayer);
+          if (!currentPlayer.state.public.canNominate) {
+            onError("You have already nominated a player this round");
+            return;
+          }
 
-              if (index == game.players.length - 1) {
-                // Round over spies win
-              }
-              else {
-                game.state.public.nominatedPlayer = game.players[index + 1].userId;
+          var targetPlayer = game.players.find(p.userId == data);
+
+          if (!targetPlayer) {
+            onError("Target player not found");
+          }
+
+          pause();
+          game.state.public.nominatedPlayer = data;
+
+          currentPlayer.state.public.vote = true;
+          targetPlayer.state.public.accusers.push(currentPlayer.userId);
+
+          break;
+        case "vote":
+          if (!game.state.public.paused || !game.state.public.nominatedPlayer) {
+            onError("There is no vote in progress");
+            return;
+          }
+
+          if (currentPlayer.state.public.vote !== null) {
+            onError("You have already cast your vote");
+            return;
+          }
+
+          currentPlayer.state.public.vote = data;
+
+          if (game.players.every(p => p.state.public.vote !== null)) {
+            if (game.players.filter(p => !p.state.public.vote).length <= game.state.public.spyCount) {
+              var targetPlayer = game.players.find(p => p.userId == game.state.public.nominatedPlayer)
+              if (targetPlayer.state.private.spy) {
+
               }
             }
             else {
-              unpause();
+              game.players.forEach(p => p.state.public.vote = null);
+
+              if (game.state.public.remainingTime <= 0) {
+                var index = game.players.findIndex(p => p.userId == game.state.public.nominatedPlayer);
+
+                if (index == game.players.length - 1) {
+                  // Round over spies win
+                }
+                else {
+                  game.state.public.nominatedPlayer = game.players[index + 1].userId;
+                }
+              }
+              else {
+                unpause();
+              }
             }
           }
-        }
-        break;
-      case "guessLocation":
-        if (!currentPlayer.state.private.spy) {
-          onError("You are not a spy so cannot guess the location");
-          return;
-        }
+          break;
+        case "guessLocation":
+          if (!currentPlayer.state.private.spy) {
+            onError("You are not a spy so cannot guess the location");
+            return;
+          }
 
-        if (game.state.public.nominatedPlayer) {
-          onError("There is a vote in progress, you must wait before you can guess the location");
-          return;
-        }
+          if (game.state.public.nominatedPlayer) {
+            onError("There is a vote in progress, you must wait before you can guess the location");
+            return;
+          }
 
-        if (currentPlayer.state.public.locationGuess) {
-          onError("You have already guessed the location this round");
-          return;
-        }
+          if (currentPlayer.state.public.locationGuess) {
+            onError("You have already guessed the location this round");
+            return;
+          }
 
-        currentPlayer.state.public.spy = true;
-        currentPlayer.state.public.locationGuess = data;
+          currentPlayer.state.public.spy = true;
+          currentPlayer.state.public.locationGuess = data;
 
-        if (!game.state.public.paused) {
-          pause();
-        }
+          if (!game.state.public.paused) {
+            pause();
+          }
 
-        if (spyCount == 1) {
-          var spies = [currentPlayer];
-        }
-        else {
-          var spies = game.players.filter(p => p.state.private.spy);
-        }
-       
-        if (spies.every(p => p.state.public.locationGuess)) {
-          game.state.public.locationId = game.state.internal.locationId;
-        }
+          if (spyCount == 1) {
+            var spies = [currentPlayer];
+          }
+          else {
+            var spies = game.players.filter(p => p.state.private.spy);
+          }
 
-        break;
-      default:
-        return;
+          if (spies.every(p => p.state.public.locationGuess)) {
+            game.state.public.locationId = game.state.internal.locationId;
+          }
+
+          break;
+        default:
+          throw 'Invalid action';
+      }
+      return stateChain;
     }
-    onSuccess(stateChain);
   }
+
 }
 
 module.exports = SpyfallService;
