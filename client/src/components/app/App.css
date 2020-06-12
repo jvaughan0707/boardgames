@@ -1,3 +1,12 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(#25a3ff, #aabeff);
+  background-attachment: fixed;
+  font-family: sans-serif;
+  min-width: 280px;
+}
+
 .page {
   padding: 30px 15px 0 15px;
 }

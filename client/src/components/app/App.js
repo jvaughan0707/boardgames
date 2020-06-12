@@ -1,7 +1,7 @@
 import React, { Component } from 'reactn';
 import './App.css';
 import Header from '../header/header';
-import Routes from '../routes/routes';
+import Home from "../home/home";
 import Auth from '../auth/auth';
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes } from '@fortawesome/free-solid-svg-icons'
@@ -45,7 +45,7 @@ class App extends Component {
         }
 
         <Auth>
-          <Routes />
+          <Home />
         </Auth>
       </>
     );

@@ -7,18 +7,13 @@
     "@fortawesome/free-solid-svg-icons": "^5.13.0",
     "@fortawesome/react-fontawesome": "^0.1.10",
     "@types/react": "^16.8.0",
-    "cookie-parser": "^1.4.3",
-    "nvm": "0.0.4",
     "react": "^16.13.1",
     "react-confetti": "^5.0.1",
     "react-dom": "^16.13.1",
-    "react-router-dom": "^5.1.2",
     "react-scripts": "^3.4.1",
     "reactn": "^2.2.7",
     "socket.io": "^2.3.0",
-    "universal-cookie": "^4.0.3",
-    "websocket-as-promised": "^1.0.1",
-    "yargs-parser": "^18.1.2"
+    "universal-cookie": "^4.0.3"
   },
   "devDependencies": {
     "nodemon": "^2.0.3"
