@@ -150,19 +150,7 @@ class Skull extends Component {
           <Finish />
         }
         <div className="skull-container" ref={el => (this.container = el)}>
-          {
-            players.map((p, i) =>
-              <PlayerTile
-                style={{ transform: this.getTilePosition(i) }}
-                key={p.userId}
-                player={p}
-                user={user}
-                playerIsUser={i === 0}
-                sendMove={this.sendMove}
-                animate={this.state.animate}
-                updating={this.state.updating} />)
-          }
-          <div className="panel left">
+        <div className="panel left">
             <div id="controls" className="centered">
               <button onClick={() => this.sendMove("bet", betAmount)} disabled={!canBet}>
                 Bet
@@ -182,10 +170,22 @@ class Skull extends Component {
             </div>
           </div>
           <div className="panel right">
-            <div className="centered">
+            <div id="actionText">
               {actionText}
             </div>
           </div>
+          {
+            players.map((p, i) =>
+              <PlayerTile
+                style={{ transform: this.getTilePosition(i) }}
+                key={p.userId}
+                player={p}
+                user={user}
+                playerIsUser={i === 0}
+                sendMove={this.sendMove}
+                animate={this.state.animate}
+                updating={this.state.updating} />)
+          }        
         </div>
       </>
     )

@@ -14,9 +14,16 @@
     left: 50%;
     transform: translateX(-50%);
   }
+
+  #actionText {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
 }
 @media only screen and (max-width: 650px) {
-  .skull-container .panel.left {
+  .skull-container .panel {
     position: initial;
     padding: 0;
   }
@@ -29,14 +36,22 @@
     background: none;
     border: none;
     position: absolute;
-    top: 40px;
+    top: 80px;
     left: 10px;
     transform: none;
     box-shadow: none;
+    z-index: 2;
+  }
+
+  .skull-container #actionText {
+    width: 100%;
+    box-sizing: border-box;
+    height: 40px;
   }
 
   .skull-container .panel.right {
-   display: none;
+    width: 98%;
+    margin-bottom: 5px;
   }
 }
 
@@ -55,7 +70,7 @@
 }
 
 .panel > div {
-  box-shadow: 10px 5px 1px #173753;
+  box-shadow: 5px 2px 1px #173753;
   border: 2px solid #173753;
   width: 140px;
   height: 80px;

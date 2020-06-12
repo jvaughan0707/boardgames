@@ -9,6 +9,7 @@
   top: 0;
   left: 0;
   font-size: min(1.5vw, 13px);
+  box-sizing: border-box;
 }
 
 .player-tile.primary {
@@ -29,7 +30,7 @@
     transform: none !important;
     width: 98% !important;
     padding-top: 27%;
-    margin-bottom: 2%;
+    margin-bottom: 5px;
   }
 
   .player-tile.primary {
