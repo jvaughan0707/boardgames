@@ -46,7 +46,9 @@
   .skull-container #actionText {
     width: 100%;
     box-sizing: border-box;
-    height: 40px;
+    height: 30px;
+    font-size: 12px;
+    padding: 7px;
   }
 
   .skull-container .panel.right {
