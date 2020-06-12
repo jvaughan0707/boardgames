@@ -16,7 +16,7 @@ class SkullService {
         turn %= game.players.length;
         let player = game.players[turn];
 
-        if (player.state.public.isAlive && !player.passed) {
+        if (player.state.public.isAlive && !player.state.public.passed) {
           player.state.public.currentTurn = true;
           return;
         }
@@ -25,25 +25,22 @@ class SkullService {
 
     var reset = () => {
       game.players.forEach(player => {
-        if (player.state.public.isAlive) {
+        // Revealed cards will stay revealed temporarily until they have moved back to the players hand
+        var publicHand = [
+          ...player.state.public.hand,
+          ...player.state.public.playedCards,
+          ...player.state.public.revealedCards
+        ];
 
-          // Revealed cards will stay revealed temporarily until they have moved back to the players hand
-          var publicHand = [
-            ...player.state.public.hand,
-            ...player.state.public.playedCards,
-            ...player.state.public.revealedCards
-          ];
+        var privateHand = [
+          ...player.state.private.hand,
+          ...player.state.internal.playedCards,
+          ...player.state.public.revealedCards
+        ];
 
-          var privateHand = [
-            ...player.state.private.hand,
-            ...player.state.internal.playedCards,
-            ...player.state.public.revealedCards
-          ];
-
-          player.state.public = { ...player.state.public, hand: publicHand, playedCards: [], revealedCards: [], currentBet: 0, passed: false };
-          player.state.internal.playedCards = [];
-          player.state.private.hand = privateHand;
-        }
+        player.state.public = { ...player.state.public, hand: publicHand, playedCards: [], revealedCards: [], currentBet: 0, passed: false };
+        player.state.internal.playedCards = [];
+        player.state.private.hand = privateHand;
       });
 
       addCheckpoint(true);
@@ -93,16 +90,15 @@ class SkullService {
       if (remainingPlayers.length == 1) {
         game.finished = true;
         var winner = remainingPlayers[0];
-        winner.currentTurn = true;
         game.state.public.winner = { displayName: winner.displayName, userId: winner.userId };
       }
       else {
         if (game.state.public.phase == phases.betting) {
-          if (game.players.filter(p => player.state.public.isAlive && !p.state.public.passed).length == 1) {
+          if (game.players.filter(p => p.state.public.isAlive && !p.state.public.passed).length == 1) {
             game.state.pubic.phase = phases.revealing;
           }
         }
-        else if (game.state.public.phase = phase.revealing) {
+        else if (game.state.public.phase == phases.revealing) {
           if (currentPlayer.state.public.currentTurn) {
             game.state.public.phase = phases.cleanUp;
             reset();
@@ -197,7 +193,7 @@ class SkullService {
 
           if (bet == totalPlayed) {
             game.players.forEach(p => {
-              if (p !== currentPlayer && p.staet.public.isAlive) {
+              if (p !== currentPlayer && p.state.public.isAlive) {
                 p.state.public.passed = true;
               }
             })
@@ -223,7 +219,7 @@ class SkullService {
             return;
           }
 
-          var remainingPlayersCount = game.players.filter(p => player.state.public.isAlive && !p.state.public.passed).length;
+          var remainingPlayersCount = game.players.filter(p => p.state.public.isAlive && !p.state.public.passed).length;
 
           if (remainingPlayersCount == 1) {
             onError('You cannot pass as the final player')
@@ -232,6 +228,7 @@ class SkullService {
 
           if (remainingPlayersCount == 2) {
             game.state.public.phase = phases.revealing;
+            
           }
 
           setNextTurnPlayer(currentPlayer);
@@ -298,7 +295,6 @@ class SkullService {
               if (remainingPlayers.length == 1) {
                 game.finished = true;
                 var winner = remainingPlayers[0];
-                winner.currentTurn = true;
                 game.state.public.winner = { displayName: winner.displayName, userId: winner.userId };
               }
               else {
@@ -316,20 +312,16 @@ class SkullService {
               addCheckpoint(false, 2000);
 
               if (currentPlayer.state.public.score == 1) {
-                game.players.forEach(p => {
-                  if (p !== currentPlayer) {
-                    p.state.public.isAlive = false;
-                  }
-                })
                 currentPlayer.state.public.score++;
                 game.finished = true;
                 var winner = currentPlayer;
-                game.state.public.winner = {displayName: winner.displayName, userId: winner.userId};
+                game.state.public.winner = { displayName: winner.displayName, userId: winner.userId };
               }
               else {
                 game.state.public.phase = phases.cleanUp;
                 reset();
                 currentPlayer.state.public.score++;
+                addCheckpoint(true);
                 game.state.public.phase = phases.playing;
               }
             }
