@@ -29,12 +29,12 @@
     position: relative;
     transform: none !important;
     width: 98% !important;
-    padding-top: 27%;
+    padding-top: 24%;
     margin-bottom: 5px;
   }
 
   .player-tile.primary {
-    padding-top: 52%;
+    padding-top: 46%;
   }
 
   .player-tile h3, .speech-bubble {
