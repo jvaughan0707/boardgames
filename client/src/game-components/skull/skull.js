@@ -6,20 +6,16 @@ import Finish from './finish/finish';
 class Skull extends Component {
   constructor(props) {
     super(props);
-    this.state = { animate: props.animate, updating: false, betAmount: 0, dimensions: null }
+    this.state = { updating: false, betAmount: 0, dimensions: null }
 
   }
 
   componentDidMount() {
-    const ws = this.global.webSocket;
-    ws.on('gameAction', this.onGameAction.bind(this));
     this.updateWindowDimensions();
     window.addEventListener('resize', this.updateWindowDimensions);
   }
 
   componentWillUnmount() {
-    const ws = this.global.webSocket;
-    ws.off('gameAction', this.onGameAction.bind(this));
     window.removeEventListener('resize', this.updateWindowDimensions);
   }
 
@@ -38,28 +34,6 @@ class Skull extends Component {
 
   getMaxBet(game) {
     return game.players.reduce((t, p) => t + p.state.playedCards.length, 0)
-  }
-
-  onGameAction(stateChain) {
-    console.log(stateChain.slice());
-    var setNext = () => {
-      let { game, animate, pause } = stateChain.shift();
-      if (game) {
-        this.setState({ updating: true, animate: animate && this.props.animate });
-        this.setGlobal({ game })
-        if (stateChain.length > 0) {
-          setTimeout(() => {
-            setNext();
-          }, (pause || 0) + (animate ? 1000 : 100))
-        }
-        else {
-          this.setState({ updating: false })
-        }
-      }
-    }
-    if (stateChain && stateChain.length > 0) {
-      setNext();
-    }
   }
 
   getTilePosition(i) {
@@ -183,7 +157,7 @@ class Skull extends Component {
                 user={user}
                 playerIsUser={i === 0}
                 sendMove={this.sendMove}
-                animate={this.state.animate}
+                animate={this.props.animate}
                 updating={this.state.updating} />)
           }        
         </div>

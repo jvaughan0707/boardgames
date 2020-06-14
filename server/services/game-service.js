@@ -229,7 +229,7 @@ class GameService {
     }
 
     this.start = (lobbyId) => {
-      Lobby.findOneAndDelete({ _id: lobbyId })
+      Lobby.findOne({ _id: lobbyId })
         .exec()
         .then(lobby => {
           if (!lobby) {
@@ -259,11 +259,12 @@ class GameService {
           getType(game).initializeGame();
 
           game.save()
-            .then(() =>
+            .then(() => {
               game.players.forEach(player => {
                 io.to(player.userId).emit('gameStarted', maskGameObject(game.toObject(), player.userId));
-              })
-            );
+              });
+              lobby.remove()
+            });
         });
     }
 

@@ -1,0 +1,54 @@
+
+.timer {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+
+.timer svg {
+  transform: scaleX(-1);
+}
+
+.timer .path-elapsed {
+  stroke-width: 7px;
+  stroke: grey;
+}
+
+.timer .path-remaining {
+  stroke-width: 7px;
+  stroke-linecap: round;
+  transform: rotate(90deg);
+  transform-origin: center;
+  transition: 1s linear all;
+  fill-rule: nonzero;
+  stroke: currentColor;
+  color: rgb(65, 184, 131);
+}
+
+.timer.paused .path-remaining {
+  color: red;
+}
+
+.timer-label {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+}
+
+.timer.paused .timer-label {
+  animation: flash 1s 2 forwards;
+}
+
+@keyframes flash {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 100%;
+  }
+}

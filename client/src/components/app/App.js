@@ -4,11 +4,11 @@ import Header from '../header/header';
 import Home from "../home/home";
 import Auth from '../auth/auth';
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faUserSecret, faCheck } from '@fortawesome/free-solid-svg-icons'
 import Overlay from '../overlay/overlay';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
-library.add(faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes)
+library.add(faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faUserSecret, faCheck)
 
 class App extends Component {
   constructor() {
