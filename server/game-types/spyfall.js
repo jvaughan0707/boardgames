@@ -12,8 +12,8 @@ class SpyfallService {
     this.initializeGame = () => {
       game.settings = game.settings || {};
       const locationCount = Math.min(game.settings.locationCount || 25, locations.length);
-      const spyCount = game.settings.spyCount || 1;
-      const time = game.settings.time || 10000//60000 * (Math.ceil(game.players.length / 2) + 4);
+      const spyCount = game.settings.spyCount || Math.ceil(game.players.length / 8);
+      const time = game.settings.time || 60000 * (Math.ceil(game.players.length / 2) + 4);
       var gameLocations = _.shuffle(locations).slice(0, locationCount);
 
       var location = gameLocations[Math.floor(Math.random() * gameLocations.length)];
