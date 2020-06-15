@@ -13,10 +13,8 @@ class Timer extends Component {
     this.timeout = setTimeout(
       () => {
         this.setState({ remainingTime: Math.min(this.getRemainingTime(this.props), this.state.remainingTime) });
-        console.log(this.state.remainingTime)
         this.interval = setInterval(() => {
           this.setState({ remainingTime: Math.min(this.getRemainingTime(this.props), this.state.remainingTime) });
-          console.log(this.state.remainingTime)
         }, 1000);
       },
       remaining % 1000);
