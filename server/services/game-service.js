@@ -40,7 +40,8 @@ class GameService {
   static getLobbies(cb) {
     return Lobby.find()
       .exec()
-      .then((lobbies) => cb(lobbies.map(getLobbyObject)));
+      .then((lobbies) => cb(lobbies.map(getLobbyObject)))
+      .catch(err => console.error(err));
   }
 
   constructor(userId, io) {
@@ -100,14 +101,14 @@ class GameService {
 
           if (!game.finished) {
             var stateChain = getType(game).onPlayerQuit(userId);
-            saveAndEmit(game, stateChain);
+            return saveAndEmit(game, stateChain);
           }
           else {
-            game.save();
+            return game.save();
           }
         }
         else {
-          game.remove();
+          return game.remove();
         }
       }
     }
@@ -122,7 +123,8 @@ class GameService {
           else {
             cb(null);
           }
-        });
+        })
+        .catch(err => console.error(err));
     }
 
     this.create = (type, displayName, rematchId) => {
@@ -130,43 +132,39 @@ class GameService {
         throw 'Invalid display name';
       }
 
-      Lobby.findOne({ players: { $elemMatch: { userId } } })
+      return Lobby.findOne({ players: { $elemMatch: { userId } } })
         .exec()
         .then(lobby => {
           if (lobby) {
             throw 'Already in a lobby';
           }
         })
-        .then(() => {
-          return new Lobby({ ...getType({ type }).getLobbySettings(), rematchId, players: [] }).save();
-        })
+        .then(() => new Lobby({ ...getType({ type }).getLobbySettings(), rematchId, players: [] }).save())
         .then(lobby => {
           io.emit('lobbyCreated', getLobbyObject(lobby));
           this.join(lobby.id, displayName);
         })
-        .catch(reason => {
-
-        })
+        .catch(err => console.error(err, { lobbyId }));
     }
 
     this.rematch = (gameId, displayName) => {
-      Game.findById(gameId)
+      return Game.findById(gameId)
         .exec()
         .then(game => {
           if (game) {
-            quit(game);
-            Lobby.findOne({ rematchId: gameId })
-              .exec()
-              .then(lobby => {
-                if (lobby) {
-                  this.join(lobby._id.toString(), displayName);
-                }
-                else {
-                  this.create(game.type, displayName, gameId)
-                }
-              });
+            quit(game)
           }
-        });
+          else {
+            throw 'Game not found';
+          }
+        })
+        .then(() =>
+          Lobby.findOne({ rematchId: gameId })
+            .exec())
+        .then(lobby => lobby ?
+          this.join(lobby._id.toString(), displayName) :
+          this.create(game.type, displayName, gameId))
+        .catch(err => console.error(err, { gameId, displayName }));
     }
 
     this.join = (lobbyId, displayName) => {
@@ -174,7 +172,7 @@ class GameService {
         throw 'Invalid display name';
       }
 
-      Lobby.findOne({ players: { $elemMatch: { userId } } })
+      return Lobby.findOne({ players: { $elemMatch: { userId } } })
         .exec()
         .then(lobby => {
           if (lobby) {
@@ -183,61 +181,72 @@ class GameService {
         })
         .then(() => Lobby.findById(lobbyId).exec())
         .then(lobby => {
-          if (lobby && lobby.players.length < lobby.maxPlayers) {
-            var user = { userId, displayName }
-            lobby.players.push(user);
-            return lobby.save()
-              .then(() => {
-                io.emit('lobbyPlayerJoined', user, lobbyId);
-              })
+          if (lobby) {
+            if (lobby.players.length < lobby.maxPlayers) {
+              var user = { userId, displayName }
+              lobby.players.push(user);
+              return lobby.save()
+                .then(() => {
+                  io.emit('lobbyPlayerJoined', user, lobbyId);
+                })
+            }
+            else {
+              throw 'Lobby has too many players'
+            }
           }
           else {
-            throw 'Unable to join lobby'
+            throw 'Lobby not found'
           }
         })
-        .catch(reason => {
-
-        });
+        .catch(err => console.error(err, { lobbyId }));
     }
 
     this.leaveLobby = lobbyId => {
-      Lobby.findById(lobbyId)
+      return Lobby.findById(lobbyId)
         .exec()
         .then(lobby => {
           if (lobby) {
             lobby.players = lobby.players.filter(p => p.userId != userId);
             if (lobby.players.length > 0) {
               io.emit('lobbyPlayerLeft', userId, lobbyId);
-              lobby.save();
+              return lobby.save();
             }
             else {
-              Lobby.deleteOne({ _id: lobbyId })
+              return Lobby.deleteOne({ _id: lobbyId })
                 .then(() => io.emit('lobbyDeleted', lobbyId));
             }
           }
-        });
+          else {
+            throw 'Lobby not found';
+          }
+        })
+        .catch(err => console.error(err, { lobbyId }));
     }
 
     this.quit = gameId => {
-      Game.findById(gameId)
+      return Game.findById(gameId)
         .exec()
         .then(game => {
           if (game) {
             quit(game);
           }
-        });
+          else {
+            throw 'Game not found'
+          }
+        })
+        .catch(err => console.error(err, { gameId }));
     }
 
     this.start = (lobbyId) => {
-      Lobby.findOne({ _id: lobbyId })
+      return Lobby.findOne({ _id: lobbyId })
         .exec()
         .then(lobby => {
           if (!lobby) {
-            return;
+            throw 'Lobby not found';
           }
 
           if (lobby.players.length < lobby.minPlayers) {
-            return;
+            throw 'Not enough players';
           }
 
           var game = new Game({
@@ -258,44 +267,63 @@ class GameService {
 
           getType(game).initializeGame();
 
-          game.save()
+          return game.save()
             .then(() => {
               game.players.forEach(player => {
                 io.to(player.userId).emit('gameStarted', maskGameObject(game.toObject(), player.userId));
               });
-              lobby.remove()
+              return lobby.remove()
             });
-        });
+        })
+        .catch(err => console.error(err, { lobbyId }));
     }
 
     this.validateAction = (gameId, action, data, onError, retryCount) => {
-      getById(gameId)
+      retryCount = retryCount || 0;
+      var logError = (err) => {
+        console.error(err, { gameId, action, data, retryCount })
+        if (onError) {
+          onError(err);
+        }
+      }
+
+      return getById(gameId)
         .then(game => {
           if (!game) {
+            logError("Game not found");
             return;
           }
           var currentPlayer = game.players.find(p => p.userId == userId);
 
           if (!currentPlayer) {
-            onError('You are not in this game');
+            logError('You are not in this game');
             return;
           }
 
           if (!currentPlayer.active) {
-            onError('You are not currently active in this game')
+            logError('You are not currently active in this game')
             return;
           }
 
-          onError = onError || (err => console.log(err));
-          var stateChain = getType(game).validateAction(currentPlayer, action, data, onError);
+          var stateChain = getType(game).validateAction(
+            currentPlayer,
+            action,
+            data,
+            logError);
           saveAndEmit(game, stateChain).catch(
             err => {
-              retryCount = retryCount || 0;
-              console.error(err, {gameId, action, data, onError, retryCount})
+              console.error(err, { gameId, action, data, retryCount })
               if (err.name == "VersionError" && retryCount < 10) {
                 this.validateAction(gameId, action, data, onError, retryCount + 1);
               }
+              else {
+                onError("Unkown error. Please try again.")
+              }
             });
+        })
+        .catch(err => {
+          console.error(err, { gameId, action, data, retryCount })
+          onError("Unkown error. Please refresh and try again.")
         })
     }
   }
