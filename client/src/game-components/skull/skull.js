@@ -120,7 +120,7 @@ class Skull extends Component {
     return (
       <>
         {
-          game.finished && this.state.dimensions &&
+          game.finished &&
           <Finish />
         }
         <div className="skull-container" ref={el => (this.container = el)}>

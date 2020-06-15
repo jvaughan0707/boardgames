@@ -67,11 +67,13 @@
 }
 
 .player, .player-inner {
-  transition: transform 1s linear, background-color 0s 0.5s;
+  height: 40px;
+  transition: transform 1s linear, background-color 0s 0.5s, box-shadow 1s linear;
 }
 .player.spy {
   transform: rotateX(180deg);
   background-color: slategray;
+  box-shadow: 5px -2px 1px #173753;
 }
 
 .player.spy .player-inner {

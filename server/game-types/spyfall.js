@@ -13,7 +13,7 @@ class SpyfallService {
       game.settings = game.settings || {};
       const locationCount = Math.min(game.settings.locationCount || 25, locations.length);
       const spyCount = game.settings.spyCount || 1;
-      const time = game.settings.time || 60000 * (Math.ceil(game.players.length / 2) + 4);
+      const time = game.settings.time || 10000//60000 * (Math.ceil(game.players.length / 2) + 4);
       var gameLocations = _.shuffle(locations).slice(0, locationCount);
 
       var location = gameLocations[Math.floor(Math.random() * gameLocations.length)];
@@ -50,13 +50,14 @@ class SpyfallService {
         };
 
         if (spy) {
-          game.state.internal.spies.push(maskUser(p));
+          game.state.internal.spies.push(p.userId);
         }
       });
     }
 
     this.onPlayerQuit = () => {
       game.finished = true;
+      game.state.public.nominatedPlayer = null;
       addCheckpoint(false);
       return stateChain;
     }
@@ -64,7 +65,7 @@ class SpyfallService {
     this.validateAction = (currentPlayer, action, data, onError) => {
       var pause = () => {
         var timerFrom = new Date();
-        var timerLength = game.state.public.timerLength - (timerFrom - game.state.public.timerFrom);
+        var timerLength = Math.max(0, game.state.public.timerLength - (timerFrom - game.state.public.timerFrom));
         game.state.public = {
           ...game.state.public,
           paused: true,
@@ -116,8 +117,15 @@ class SpyfallService {
           break;
         case "vote":
           if (!game.state.public.paused || !game.state.public.nominatedPlayer) {
-            onError("There is no vote in progress");
-            return;
+            if (game.state.public.timerLength - (new Date() - game.state.public.timerFrom) <= 0) {
+              pause();
+              game.state.public.nominatedPlayer = maskUser(game.players[0]);
+              game.players[0].state.public.vote = false;
+            }
+            else {
+              onError("There is no vote in progress");
+              return;
+            }
           }
 
           if (currentPlayer.state.public.vote !== null) {
@@ -129,32 +137,34 @@ class SpyfallService {
 
           if (game.players.every(p => p.state.public.vote !== null)) {
             if (game.players.filter(p => !p.state.public.vote).length <= game.state.public.spyCount) {
-              game.state.public.spies = game.state.internal.spies;
-             
+              game.players.forEach(p => p.state.public.spy = p.state.private.spy);
+
               addCheckpoint(true, 1000);
 
               game.finished = true;
             }
             else {
-              game.players.forEach(p => p.state.public.vote = null);
-
-              game.state.public.nominatedPlayer = null;
 
               if (game.state.public.timerLength <= 0) {
                 var index = game.players.findIndex(p => p.userId == game.state.public.nominatedPlayer.userId);
 
                 if (index == game.players.length - 1) {
-                  game.state.public.spies = game.state.internal.spies;
-
+                  game.players.forEach(p => p.state.public.spy = p.state.private.spy)
                   addCheckpoint(true, 1000);
 
+                  game.state.public.nominatedPlayer = null;
                   game.finished = true;
                 }
                 else {
+                  addCheckpoint(false, 1000);
+                  game.players.forEach(p => p.state.public.vote = null);
                   game.state.public.nominatedPlayer = maskUser(game.players[index + 1]);
+                  game.players[index + 1].state.public.vote = false;
                 }
               }
               else {
+                game.players.forEach(p => p.state.public.vote = null);
+                game.state.public.nominatedPlayer = null;
                 unpause();
               }
             }
@@ -187,9 +197,8 @@ class SpyfallService {
 
           currentPlayer.state.public.spy = true;
           currentPlayer.state.public.locationGuess = data;
-          game.state.public.spies = game.state.internal.spies;
 
-          if (game.state.internal.spies.every(p => p.state.public.locationGuess)) {
+          if (game.players.every(p => !p.state.private.spy || p.state.public.locationGuess)) {
             game.state.public.locationId = game.state.internal.locationId;
             addCheckpoint(true, 1000);
             game.finished = true;

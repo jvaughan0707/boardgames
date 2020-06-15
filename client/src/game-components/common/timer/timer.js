@@ -6,15 +6,40 @@ class Timer extends Component {
     super();
     this.state = { remainingTime: this.getRemainingTime(props) }
   }
+
+  startTimer() {
+    var remaining = this.getRemainingTime(this.props);
+
+    this.timeout = setTimeout(
+      () => {
+        this.setState({ remainingTime: Math.min(this.getRemainingTime(this.props), this.state.remainingTime) });
+        console.log(this.state.remainingTime)
+        this.interval = setInterval(() => {
+          this.setState({ remainingTime: Math.min(this.getRemainingTime(this.props), this.state.remainingTime) });
+          console.log(this.state.remainingTime)
+        }, 1000);
+      },
+      remaining % 1000);
+  }
+
   componentDidMount() {
-    this.timeout = setInterval(() => {
-      console.log('tick');
-      this.setState({ remainingTime: Math.min(this.getRemainingTime(this.props), this.state.remainingTime) });
-    }, 1000);
+    this.startTimer();
+  }
+
+  componentDidUpdate(prevProps) {
+    if (!prevProps.paused && this.props.paused) {
+      clearTimeout(this.timeout);
+      clearInterval(this.interval);
+    }
+
+    if (prevProps.paused && !this.props.paused) {
+      this.startTimer();
+    }
   }
 
   componentWillUnmount() {
     clearTimeout(this.timeout);
+    clearInterval(this.interval);
   }
 
   getRemainingTime = (props) => {
@@ -22,6 +47,7 @@ class Timer extends Component {
     if (remaining === 0) {
       if (typeof (props.onTimerEnd) === 'function') {
         props.onTimerEnd();
+        clearInterval(this.interval);
       }
     }
     return remaining;
@@ -29,13 +55,13 @@ class Timer extends Component {
 
   render() {
     return (
-      <div className={`${this.props.paused ? 'paused' : ''} timer`}>
+      <div className={`${this.props.paused || this.state.remainingTime === 0 ? 'paused' : ''} timer`}>
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
           <g fill="none" stroke="none">
             <circle className="path-elapsed" cx="50" cy="50" r="45"></circle>
             <path
               className="path-remaining"
-              strokeDasharray={`${this.state.remainingTime / this.props.initial * 283} 283`}
+              strokeDasharray={`${Math.max(this.state.remainingTime - 1000, 0) / this.props.initial * 283} 283`}
               d="
           M 50, 50
           m -45, 0
@@ -44,7 +70,7 @@ class Timer extends Component {
           </g>
         </svg>
         <span className="timer-label">
-          {Math.floor(this.state.remainingTime / 1000 / 60)}:{Math.floor((this.state.remainingTime / 1000) % 60).toString().padStart(2, '0')}
+          {Math.floor(this.state.remainingTime / 1000 / 60)}:{Math.round((this.state.remainingTime / 1000) % 60).toString().padStart(2, '0')}
         </span>
       </div>)
   }
