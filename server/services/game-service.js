@@ -64,7 +64,7 @@ class GameService {
       stateChain = stateChain || [];
       game.markModified("state");
       game.markModified("players");
-      game.save()
+      return game.save()
         .then(() => {
           game.players.forEach(player => {
             if (player.active) {
@@ -138,7 +138,7 @@ class GameService {
           }
         })
         .then(() => {
-          return new Lobby({...getType({type}).getLobbySettings(), rematchId}).save();
+          return new Lobby({ ...getType({ type }).getLobbySettings(), rematchId, players: [] }).save();
         })
         .then(lobby => {
           io.emit('lobbyCreated', getLobbyObject(lobby));
@@ -151,22 +151,22 @@ class GameService {
 
     this.rematch = (gameId, displayName) => {
       Game.findById(gameId)
-      .exec()
-      .then(game => {
-        if (game) {
-          quit(game);
-          Lobby.findOne({ rematchId: gameId })
-          .exec()
-          .then(lobby => {
-            if (lobby) {
-              this.join(lobby._id.toString(), displayName);
-            }
-            else {
-              this.create(game.type, displayName, gameId)
-            }
-          });
-        }
-      });
+        .exec()
+        .then(game => {
+          if (game) {
+            quit(game);
+            Lobby.findOne({ rematchId: gameId })
+              .exec()
+              .then(lobby => {
+                if (lobby) {
+                  this.join(lobby._id.toString(), displayName);
+                }
+                else {
+                  this.create(game.type, displayName, gameId)
+                }
+              });
+          }
+        });
     }
 
     this.join = (lobbyId, displayName) => {
@@ -268,7 +268,7 @@ class GameService {
         });
     }
 
-    this.validateAction = (gameId, action, data, onError) => {
+    this.validateAction = (gameId, action, data, onError, retryCount) => {
       getById(gameId)
         .then(game => {
           if (!game) {
@@ -286,9 +286,16 @@ class GameService {
             return;
           }
 
-          onError = onError || (() => null);
+          onError = onError || (err => console.log(err));
           var stateChain = getType(game).validateAction(currentPlayer, action, data, onError);
-          saveAndEmit(game, stateChain);
+          saveAndEmit(game, stateChain).catch(
+            err => {
+              retryCount = retryCount || 0;
+              console.error(err, {gameId, action, data, onError, retryCount})
+              if (err.name == "VersionError" && retryCount < 10) {
+                this.validateAction(gameId, action, data, onError, retryCount + 1);
+              }
+            });
         })
     }
   }

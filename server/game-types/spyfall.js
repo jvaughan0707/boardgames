@@ -7,7 +7,7 @@ class SpyfallService {
     var addCheckpoint = (animate, pause) => stateChain.push({ game: game.toObject(), animate, pause })
     var maskUser = (user) => ({ userId: user.userId, displayName: user.displayName });
     this.getLobbySettings = () =>
-      ({ type: 'spyfall', title: 'Spyfall', minPlayers: 4, maxPlayers: 12, players: [] })
+      ({ type: 'spyfall', title: 'Spyfall', minPlayers: 4, maxPlayers: 12 })
 
     this.initializeGame = () => {
       game.settings = game.settings || {};

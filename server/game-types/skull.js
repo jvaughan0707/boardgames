@@ -57,7 +57,7 @@ class SkullService {
     }
 
     this.getLobbySettings = () =>
-      ({ type: 'skull', title: 'Skull', minPlayers: 2, maxPlayers: 12, players: [] });
+      ({ type: 'skull', title: 'Skull', minPlayers: 2, maxPlayers: 12 });
 
     this.initializeGame = () => {
       const colours = ["gold", "blue", "red", "pink", "green", "purple"];
