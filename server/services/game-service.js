@@ -148,11 +148,13 @@ class GameService {
     }
 
     this.rematch = (gameId, displayName) => {
+      var game = null;
       return Game.findById(gameId)
         .exec()
-        .then(game => {
+        .then(g => {
+          game = g;
           if (game) {
-            quit(game)
+            return quit(game)
           }
           else {
             throw 'Game not found';
