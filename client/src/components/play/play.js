@@ -11,9 +11,9 @@ class Play extends Component {
   getGameComponent(game) {
     switch (game.type.toLowerCase()) {
       case 'skull':
-        return <Skull animate={this.state.animate} updating={this.state.updating} />
+        return <Skull animate={this.state.animate} allowAction={!this.state.updating && this.global.webSocket.connected} />
       case 'spyfall':
-        return <Spyfall animate={true} />
+        return <Spyfall animate={true} allowAction={!this.state.updating && this.global.webSocket.connected}/>
       default:
         break;
     }

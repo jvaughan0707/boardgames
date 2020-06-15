@@ -6,8 +6,7 @@ import Finish from './finish/finish';
 class Skull extends Component {
   constructor(props) {
     super(props);
-    this.state = { updating: false, betAmount: 0, dimensions: null }
-
+    this.state = { betAmount: 0, dimensions: null }
   }
 
   componentDidMount() {
@@ -60,7 +59,7 @@ class Skull extends Component {
   }
 
   sendMove = (type, data) => {
-    if (!this.state.updating) {
+    if (this.props.allowAction) {
       this.global.webSocket.emit("gameAction", this.global.game.gameId, type, data, error => console.log(error));
     }
   }
@@ -124,7 +123,7 @@ class Skull extends Component {
           <Finish />
         }
         <div className="skull-container" ref={el => (this.container = el)}>
-        <div className="panel left">
+          <div className="panel left">
             <div id="controls" className="centered">
               <button onClick={() => this.sendMove("bet", betAmount)} disabled={!canBet}>
                 Bet
@@ -157,9 +156,8 @@ class Skull extends Component {
                 user={user}
                 playerIsUser={i === 0}
                 sendMove={this.sendMove}
-                animate={this.props.animate}
-                updating={this.state.updating} />)
-          }        
+                animate={this.props.animate}/>)
+          }
         </div>
       </>
     )
