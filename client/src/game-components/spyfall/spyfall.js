@@ -64,7 +64,11 @@ class Spyfall extends Component {
               }} />
             <div>Secret location: <span className="nowrap">{spy ? 'Unknown' : locations[user.state.locationId]}</span></div>
             <div>Your role: {spy ? 'Spy' : user.state.role}</div>
-            <div>Objective: {spy ? 'Stay hidden and try to work out the location before time runs out!' : 'Find the spies without giving away the location!'}</div>
+            <div>Objective:
+              {
+                spy ? 'Stay hidden and try to work out the location before time runs out!' :
+                  `Find the ${game.state.spyCount > 1 ? 'spies' : 'spy'} without giving away the location!`
+              }</div>
             {
               spy && <div>
                 Selected location: <span className="nowrap">{this.state.selectedLocationId ? locations[this.state.selectedLocationId] : 'None'}</span>
@@ -87,12 +91,12 @@ class Spyfall extends Component {
                 )}
                 </div>
                 <button onClick={() => this.sendMove("vote", true)}
-                  disabled={user.state.vote !== null || 
+                  disabled={user.state.vote !== null ||
                     (game.state.nominatedPlayer && game.state.nominatedPlayer.userId === user.userId)}>
                   <FontAwesomeIcon icon="check" />
                 </button>
                 <button onClick={() => this.sendMove("vote", false)}
-                  disabled={user.state.vote !== null || 
+                  disabled={user.state.vote !== null ||
                     (game.state.nominatedPlayer && game.state.nominatedPlayer.userId === user.userId)}>
                   <FontAwesomeIcon icon="times" />
                 </button>

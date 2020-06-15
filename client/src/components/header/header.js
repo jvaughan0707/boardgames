@@ -14,7 +14,7 @@ const Header = (props) => {
         {!(ws && ws.connected) && <FontAwesomeIcon icon="unlink"/>}
         {game && <FontAwesomeIcon icon="sign-out-alt" className="clickable" onClick={props.openLeaveGame}/>}
         {game && <FontAwesomeIcon icon="question" className="clickable" onClick={props.openRules}/>}
-        {user && <FontAwesomeIcon icon="cog" className="clickable" onClick={props.openSettings}/>}
+        {user && props.openSettings && <FontAwesomeIcon icon="cog" className="clickable" onClick={props.openSettings}/>}
       </div>
     </div>
   );

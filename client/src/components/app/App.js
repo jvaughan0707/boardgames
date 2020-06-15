@@ -7,6 +7,8 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faUserSecret, faCheck } from '@fortawesome/free-solid-svg-icons'
 import Overlay from '../overlay/overlay';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import SkullRules from '../../game-components/skull/rules/rules';
+import SpyfallRules from '../../game-components/spyfall/rules/rules';
 
 library.add(faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faUserSecret, faCheck)
 
@@ -25,10 +27,22 @@ class App extends Component {
     this.setState({ overlay: null })
   }
 
+  getRules = (type ) => {
+    switch (type) {
+      case 'skull':
+        return <SkullRules/>
+        case 'spyfall':
+          return <SpyfallRules/>
+      default:
+        return null;
+    }
+  }
+
   render() {
     return (
       <>
-        <Header openLeaveGame={() => this.setState({ overlay: 'leaveGame' })} />
+        <Header openLeaveGame={() => this.setState({ overlay: 'leaveGame' })}
+          openRules={() => this.setState({ overlay: 'rules' })} />
         {
           this.state.overlay === 'leaveGame' &&
           <Overlay>
@@ -41,6 +55,17 @@ class App extends Component {
               <button onClick={this.quit}>Yes</button>
               <button onClick={() => this.setState({ overlay: null })}>No</button>
             </div>
+          </Overlay>
+        }
+        {
+          this.state.overlay === 'rules' &&
+          <Overlay>
+            <FontAwesomeIcon style={{ position: 'absolute', right: '15px', top: '15px' }}
+              icon="times" onClick={() => this.setState({ overlay: null })} className="clickable" />
+            <h2>Rules</h2>
+            {
+              this.getRules(this.global.game.type)
+            }
           </Overlay>
         }
 
