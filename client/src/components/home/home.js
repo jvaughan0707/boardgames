@@ -14,6 +14,13 @@ class Home extends Component {
     ws.on('gameStarted', this.onGameStarted.bind(this));
     ws.on('gameEnded', this.onGameEnded.bind(this));
 
+    ws.on('connect', () =>
+      ws.emit('getCurrentGame', game => {
+        this.setGlobal({ game });
+        this.setState({ loading: false });
+      })
+    );
+
     ws.emit('getCurrentGame', game => {
       this.setGlobal({ game });
       this.setState({ loading: false });
