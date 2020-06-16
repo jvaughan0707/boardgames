@@ -3,7 +3,7 @@ import './spyfall.css';
 import Timer from '../common/timer/timer';
 import Finish from './finish/finish';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-const images = require.context('../../resources/spyfall', true);
+import locationsImg from '../../resources/spyfall/locations.jpg';
 
 class Spyfall extends Component {
   constructor(props) {
@@ -107,7 +107,6 @@ class Spyfall extends Component {
           <div id="locations">
             {
               Object.keys(locations).map(id => {
-                var img = images('./' + id + '.png');
                 var className = 'location ';
 
                 if (spy) {
@@ -122,7 +121,7 @@ class Spyfall extends Component {
                 }
 
                 return (
-                  <div key={id} style={{ backgroundImage: `url(${img})` }}
+                  <div key={id} style={{ background: `url(${locationsImg}) 0 ${(1 - id)*170}px/100%` }}
                     alt={locations[id]} className={className}
                     onClick={spy ? () => this.setState({ selectedLocationId: id }) : null}>
                     {

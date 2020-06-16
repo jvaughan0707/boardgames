@@ -15,12 +15,11 @@
 
 .location {
   box-sizing: border-box;
-  border-radius: 5px;
+  border-radius: 7px;
   width: 125px;
   height: 85px;
   position: relative;
   font-size: 40px;
-  background-size: cover;
   line-height: 85px;
   text-align: center;
   color: #404040;
