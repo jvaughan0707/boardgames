@@ -52,6 +52,7 @@ class Timer extends Component {
   }
 
   render() {
+    var remainingSeconds = Math.round(this.state.remainingTime / 1000);
     return (
       <div className={`${this.props.paused || this.state.remainingTime === 0 ? 'paused' : ''} timer`}>
         <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -59,7 +60,7 @@ class Timer extends Component {
             <circle className="path-elapsed" cx="50" cy="50" r="45"></circle>
             <path
               className="path-remaining"
-              strokeDasharray={`${Math.max(this.state.remainingTime - 1000, 0) / this.props.initial * 283} 283`}
+              strokeDasharray={`${Math.max(this.props.paused ? this.state.remainingTime : this.state.remainingTime - 1000, 0) / this.props.initial * 283} 283`}
               d="
           M 50, 50
           m -45, 0
@@ -68,7 +69,7 @@ class Timer extends Component {
           </g>
         </svg>
         <span className="timer-label">
-          {Math.floor(this.state.remainingTime / 1000 / 60)}:{Math.round((this.state.remainingTime / 1000) % 60).toString().padStart(2, '0')}
+          {Math.floor(remainingSeconds / 60)}:{(remainingSeconds % 60).toString().padStart(2, '0')}
         </span>
       </div>)
   }
