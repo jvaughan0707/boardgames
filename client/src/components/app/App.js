@@ -64,7 +64,7 @@ class App extends Component {
     webSocket.on('userValidated', this.onUserValidated);
 
     webSocket.on('knock', () => {
-      if (!this.global.mute) {
+      if (!this.global.mute && !this.global.game) {
         new Audio(knock).play();
       }
     });
@@ -82,15 +82,21 @@ class App extends Component {
     this.setState({ userValidated: true });
   }
 
-  render() {
+  
+  toggleMute = () => {
+    var mute = this.global.mute ? 0 : 1;
+    this.setCookie("mute", mute);
+    this.setGlobal({mute});
+  }
 
+  render() {
     return (
       this.state.userValidated ?
 
       <>
         <Header openLeaveGame={() => this.setState({ overlay: 'leaveGame' })}
           openRules={() => this.setState({ overlay: 'rules' })}
-          hammer={this.hammer} />
+          toggleMute={this.toggleMute} />
         {
           this.state.overlay === 'leaveGame' &&
           <Overlay>

@@ -8,17 +8,10 @@ const Header = (props) => {
   const [user] = useGlobal('user');
   const [ws] = useGlobal('webSocket');
   const [game] = useGlobal('game');
-  const [mute, setMute] = useGlobal('mute');
+  const [mute] = useGlobal('mute');
 
   var knock = () => {
     ws.emit('knock');
-  }
-
-  var toggleMute = () => {
-    var val = Number(cookies.get("mute"));
-    var newVal = val ? 0 : 1
-    cookies.set("mute", newVal)
-    setMute(newVal);
   }
 
   return (
@@ -28,8 +21,8 @@ const Header = (props) => {
         {game && <FontAwesomeIcon icon="sign-out-alt" className="clickable" onClick={props.openLeaveGame} />}
         {game && <FontAwesomeIcon icon="question" className="clickable" onClick={props.openRules} />}
         {user && props.openSettings && <FontAwesomeIcon icon="cog" className="clickable" onClick={props.openSettings} />}
-        {user && <KnockIcon className="clickable" onClick={knock} />}
-        <FontAwesomeIcon icon={mute ? "volume-mute" : "volume-up"}  className="clickable" onClick={toggleMute} />
+        {user && !game && <KnockIcon className="clickable" onClick={knock} />}
+        <FontAwesomeIcon icon={mute ? "volume-mute" : "volume-up"}  className="clickable" onClick={props.toggleMute} />
       </div>
     </div>
   );
