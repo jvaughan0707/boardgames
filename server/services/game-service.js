@@ -41,7 +41,7 @@ class GameService {
     return Lobby.find()
       .exec()
       .then((lobbies) => cb(lobbies.map(getLobbyObject)))
-      .catch(err => console.error(err));
+      .catch(err => console.error(new Date(), err));
   }
 
   constructor(userId, io) {
@@ -124,7 +124,7 @@ class GameService {
             cb(null);
           }
         })
-        .catch(err => console.error(err));
+        .catch(err => console.error(new Date(), err, { userId }));
     }
 
     this.create = (type, displayName, rematchId) => {
@@ -144,7 +144,7 @@ class GameService {
           io.emit('lobbyCreated', getLobbyObject(lobby));
           this.join(lobby.id, displayName);
         })
-        .catch(err => console.error(err, { lobbyId }));
+        .catch(err => console.error(new Date(), err, { lobbyId, userId }));
     }
 
     this.rematch = (gameId, displayName) => {
@@ -166,7 +166,7 @@ class GameService {
         .then(lobby => lobby ?
           this.join(lobby._id.toString(), displayName) :
           this.create(game.type, displayName, gameId))
-        .catch(err => console.error(err, { gameId, displayName }));
+        .catch(err => console.error(new Date(), err, { gameId, displayName, userId }));
     }
 
     this.join = (lobbyId, displayName) => {
@@ -200,7 +200,7 @@ class GameService {
             throw 'Lobby not found'
           }
         })
-        .catch(err => console.error(err, { lobbyId }));
+        .catch(err => console.error(new Date(), err, { lobbyId, userId }));
     }
 
     this.leaveLobby = lobbyId => {
@@ -222,7 +222,7 @@ class GameService {
             throw 'Lobby not found';
           }
         })
-        .catch(err => console.error(err, { lobbyId }));
+        .catch(err => console.error(new Date(), err, { lobbyId, userId }));
     }
 
     this.quit = gameId => {
@@ -236,7 +236,7 @@ class GameService {
             throw 'Game not found'
           }
         })
-        .catch(err => console.error(err, { gameId }));
+        .catch(err => console.error(new Date(), err, { gameId, userId }));
     }
 
     this.start = (lobbyId) => {
@@ -277,13 +277,13 @@ class GameService {
               return lobby.remove()
             });
         })
-        .catch(err => console.error(err, { lobbyId }));
+        .catch(err => console.error(new Date(), err, { lobbyId, userId }));
     }
 
     this.validateAction = (gameId, action, data, onError, retryCount) => {
       retryCount = retryCount || 0;
       var logError = (err) => {
-        console.error(err, { gameId, action, data, retryCount })
+        console.error(new Date(), err, { gameId, action, data, retryCount })
         if (onError) {
           onError(err);
         }
@@ -314,7 +314,7 @@ class GameService {
             logError);
           saveAndEmit(game, stateChain).catch(
             err => {
-              console.error(err, { gameId, action, data, retryCount })
+              console.error(new Date(), err, { gameId, action, data, retryCount })
               if (err.name == "VersionError" && retryCount < 10) {
                 this.validateAction(gameId, action, data, onError, retryCount + 1);
               }
@@ -324,7 +324,7 @@ class GameService {
             });
         })
         .catch(err => {
-          console.error(err, { gameId, action, data, retryCount })
+          console.error(new Date(), err, { gameId, action, data, retryCount, userId })
           onError("Unkown error. Please refresh and try again.")
         })
     }

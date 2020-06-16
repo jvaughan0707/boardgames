@@ -4,19 +4,25 @@ import Header from '../header/header';
 import Home from "../home/home";
 import Auth from '../auth/auth';
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faUserSecret, faCheck } from '@fortawesome/free-solid-svg-icons'
 import Overlay from '../overlay/overlay';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SkullRules from '../../game-components/skull/rules/rules';
 import SpyfallRules from '../../game-components/spyfall/rules/rules';
+import { faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faUserSecret, faCheck, faVolumeMute, faVolumeUp } from '@fortawesome/free-solid-svg-icons'
+import Cookies from 'universal-cookie';
+import knock from '../../resources/door-knock.ogg'
+import Loading from '../loading/loading';
+import io from 'socket.io-client';
 
-library.add(faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faUserSecret, faCheck)
+library.add(faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faUserSecret, faCheck, faVolumeMute, faVolumeUp)
+const cookies = new Cookies();
 
 class App extends Component {
   constructor() {
     super();
-    this.state = { overlay: null }
-    this.setGlobal({ user: null, webSocket: null, game: null });
+    this.state = { overlay: null, userValidated: false }
+    this.setGlobal({ user: {displayName: cookies.get('displayName')}, webSocket: null, game: null, mute: cookies.get('mute') });
+    this.connect();
   }
 
   quit = () => {
@@ -27,22 +33,64 @@ class App extends Component {
     this.setState({ overlay: null })
   }
 
-  getRules = (type ) => {
+  getRules = (type) => {
     switch (type) {
       case 'skull':
-        return <SkullRules/>
-        case 'spyfall':
-          return <SpyfallRules/>
+        return <SkullRules />
+      case 'spyfall':
+        return <SpyfallRules />
       default:
         return null;
     }
   }
 
+  setCookie(key, value) {
+    var expiry = new Date();
+    expiry.setDate(99999);
+
+    cookies.set(key, value, { path: '/', expires: new Date(expiry) });
+  }
+
+  connect() {
+    const webSocket = io();
+    webSocket.on('connect', () =>
+      this.setGlobal({ webSocket })
+    );
+
+    webSocket.on('disconnect', () =>
+      this.setGlobal({ webSocket })
+    );
+
+    webSocket.on('userValidated', this.onUserValidated);
+
+    webSocket.on('knock', () => {
+      if (!this.global.mute) {
+        new Audio(knock).play();
+      }
+    });
+  }
+
+  onUserValidated = (user) => {
+    this.setCookie('userId', user.userId);
+    this.setCookie('userKey', user.userKey);
+
+    if (this.global.user) {
+      user.displayName = this.global.user.displayName;
+    }
+
+    this.setGlobal({ user });
+    this.setState({ userValidated: true });
+  }
+
   render() {
+
     return (
+      this.state.userValidated ?
+
       <>
         <Header openLeaveGame={() => this.setState({ overlay: 'leaveGame' })}
-          openRules={() => this.setState({ overlay: 'rules' })} />
+          openRules={() => this.setState({ overlay: 'rules' })}
+          hammer={this.hammer} />
         {
           this.state.overlay === 'leaveGame' &&
           <Overlay>
@@ -72,7 +120,8 @@ class App extends Component {
         <Auth>
           <Home />
         </Auth>
-      </>
+      </> : 
+        <Loading />
     );
   }
 };

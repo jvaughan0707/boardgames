@@ -1,7 +1,5 @@
 import React, { PureComponent } from 'reactn';
 import Cookies from 'universal-cookie';
-import Loading from '../loading/loading';
-import io from 'socket.io-client';
 import './auth.css'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
@@ -11,8 +9,7 @@ class Auth extends PureComponent {
   constructor() {
     super();
     var displayName = cookies.get('displayName') || '';
-    this.state = { userValidated: false, displayName };
-    this.connect();
+    this.state = { displayName };
   }
 
   handleChange(event) {
@@ -26,28 +23,6 @@ class Auth extends PureComponent {
     this.setGlobal({ user });
   }
 
-  connect() {
-    const webSocket = io();
-    webSocket.on('connect', () =>
-      this.setGlobal({ webSocket })
-    );
-
-    webSocket.on('disconnect', () =>
-      this.setGlobal({ webSocket })
-    );
-
-    webSocket.on('userValidated', this.onUserValidated.bind(this));
-  }
-
-  onUserValidated(user) {
-    this.setCookie('userId', user.userId);
-    this.setCookie('userKey', user.userKey);
-
-    user.displayName = this.state.displayName;
-    this.setGlobal({ user });
-    this.setState({ userValidated: true });
-  }
-
   setCookie(key, value) {
     var expiry = new Date();
     expiry.setDate(99999);
@@ -57,19 +32,16 @@ class Auth extends PureComponent {
 
   render() {
     return (
-      this.state.userValidated ?
-        (this.global.user && this.global.user.displayName ?
-          this.props.children :
-          <div id="pre-auth" className="centered">
-            <input maxLength="15" type="text" onChange={this.handleChange.bind(this)} name="displayName" placeholder="Enter a username"></input>
-            <span id="submit">
-              <FontAwesomeIcon icon="arrow-right" onClick={this.createUser.bind(this)} disabled={this.state.displayName.length === 0} />
-            </span>
-          </div>
-        ) :
-        <Loading />)
+      this.global.user && this.global.user.displayName ?
+        this.props.children :
+        <div id="pre-auth" className="centered">
+          <input maxLength="15" type="text" onChange={this.handleChange.bind(this)} name="displayName" placeholder="Enter a username"></input>
+          <span id="submit">
+            <FontAwesomeIcon icon="arrow-right" onClick={this.createUser.bind(this)} disabled={this.state.displayName.length === 0} />
+          </span>
+        </div>
+    )
   }
 }
-
 
 export default Auth;

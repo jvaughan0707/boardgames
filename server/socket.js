@@ -5,6 +5,7 @@ module.exports = (server) => {
   const io = require('socket.io')(server);
 
   io.on('connection', (ws) => {
+    ws.on('knock', () => io.emit('knock'));
     ws.on('getOpenLobbies', GameService.getLobbies);
 
     var cookies = {};
