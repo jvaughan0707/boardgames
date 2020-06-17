@@ -93,7 +93,7 @@
   border-radius: 100%;
 }
 
-.card img {
+.card * {
   border-radius: 100%;
 }
 
@@ -103,6 +103,6 @@
   position: absolute;
 }
 
-.base-tile img {
+.base-tile * {
   border-radius: 7%;
 }

@@ -35,14 +35,17 @@ class Play extends Component {
         let { game, animate, pause } = stateChain.shift();
         if (game) {
           this.setState({ updating: true, animate: animate });
-          this.setGlobal({ game })
+          this.setGlobal({ game });
           if (stateChain.length > 0) {
-            setTimeout(() => {
-              setNext();
-            }, (pause || 0) + (animate ? 1000 : 100))
+            setTimeout(
+              () => {
+                setNext();
+              },
+              (pause || 0) + (animate ? 1000 : 100)
+            );
           }
           else {
-            this.setState({ updating: false })
+            this.setState({ updating: false });
           }
         }
       }

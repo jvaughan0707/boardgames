@@ -6,11 +6,18 @@ const images = require.context('../../../resources/skull', true);
 class PlayerTile extends Component {
   componentDidMount() {
     this.colour = this.props.player.state.colour;
-    this.cardBack = images('./' + this.colour + '_back.png');
-    this.baseFront = images('./' + this.colour + '_base_front.png');
-    this.baseBack = images('./' + this.colour + '_base_back.png');
-    this.skull = images('./' + this.colour + '_skull.png');
-    this.flower = images('./' + this.colour + '_flower.png');
+    var cardSet = images('./' + this.colour + '.png');
+    
+    var getBackground = index => {
+      return `url(${cardSet}) 
+        ${index * 25}% 0 /540%`;
+    }
+
+    this.cardBack = getBackground(0);
+    this.flower = getBackground(1);
+    this.skull = getBackground(2);
+    this.baseBack = getBackground(3);
+    this.baseFront = getBackground(4);
 
     switch (this.colour) {
       case 'gold':
@@ -72,7 +79,7 @@ class PlayerTile extends Component {
               ...player.state.hand.map((card, index) =>
                 <Tile key={card.id}
                   colour={this.tileColour}
-                  frontImg={this.getCardImg(card)}
+                  frontImg={this.getCardBackground(card)}
                   backImg={this.cardBack}
                   click={playingPhase && this.props.playerIsUser && player.state.currentTurn ? () => this.props.sendMove("playCard", card.id) : null}
                   className='card'
@@ -85,7 +92,7 @@ class PlayerTile extends Component {
               ...player.state.playedCards.map((card, index) =>
                 <Tile key={card.id}
                   colour={this.tileColour}
-                  frontImg={this.getCardImg(card)}
+                  frontImg={this.getCardBackground(card)}
                   backImg={this.cardBack}
                   click={revealingPhase && user.state.currentTurn && (this.props.playerIsUser || user.state.playedCards.length === 0) ? () => this.props.sendMove("revealCard", player.userId) : null}
                   posX={this.props.playerIsUser ? 177 : 195}
@@ -99,7 +106,7 @@ class PlayerTile extends Component {
               ...player.state.revealedCards.map((card, index) =>
                 <Tile key={card.id}
                   colour={this.tileColour}
-                  frontImg={this.getCardImg(card)}
+                  frontImg={this.getCardBackground(card)}
                   backImg={this.cardBack}
                   className="card"
                   animated={this.props.animate}
@@ -113,9 +120,9 @@ class PlayerTile extends Component {
         </div>
       </div>
     );
-  }
+  } 
 
-  getCardImg(card) {
+  getCardBackground(card) {
     if (card.value === 'skull') {
       return this.skull;
     } else if (card.value === 'flower') {

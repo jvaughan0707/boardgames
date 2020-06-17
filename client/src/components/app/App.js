@@ -8,13 +8,13 @@ import Overlay from '../overlay/overlay';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SkullRules from '../../game-components/skull/rules/rules';
 import SpyfallRules from '../../game-components/spyfall/rules/rules';
-import { faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faUserSecret, faCheck, faVolumeMute, faVolumeUp } from '@fortawesome/free-solid-svg-icons'
+import { faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faUserSecret, faCheck, faVolumeMute, faVolumeUp, faPlus, faMinus } from '@fortawesome/free-solid-svg-icons'
 import Cookies from 'universal-cookie';
 import knock from '../../resources/door-knock.ogg'
 import Loading from '../loading/loading';
 import io from 'socket.io-client';
 
-library.add(faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faUserSecret, faCheck, faVolumeMute, faVolumeUp)
+library.add(faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faPlus, faMinus, faUserSecret, faCheck, faVolumeMute, faVolumeUp)
 const cookies = new Cookies();
 
 class App extends Component {
