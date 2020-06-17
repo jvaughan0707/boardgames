@@ -88,9 +88,19 @@
 
 #controls button {
   width: 50px;
+  margin: 10px 15px 5px 0;
+  font-size: 16px;
 }
 
-#controls * {
-  margin: 5px 10px;
-  font-size: 16px;
+#controls button.small {
+  margin: 0;
+  width: 24px;
+  padding: 0;
+}
+
+#controls #betAmount {
+  display: inline-block;
+  width: 20px;
+  padding: 2px;
+  text-align: center;
 }

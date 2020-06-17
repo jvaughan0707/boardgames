@@ -175,6 +175,12 @@ class SkullService {
           }
 
           var bet = Number(data)
+
+          if (bet !== Math.round(bet)) {
+            onError('Bet amount must be a whole number')
+            return;
+          }
+
           var highestBet = Math.max(...game.players.map(p => p.state.public.currentBet));
 
           if (bet <= highestBet) {
@@ -308,7 +314,7 @@ class SkullService {
           else {
             let totalRevealed = game.players.reduce((t, p) => t + p.state.public.revealedCards.length, 0);
 
-            if (totalRevealed == currentPlayer.state.public.currentBet) {
+            if (totalRevealed >= currentPlayer.state.public.currentBet) {
               addCheckpoint(false, 2000);
 
               if (currentPlayer.state.public.score == 1) {

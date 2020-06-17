@@ -2,11 +2,12 @@ import React, { Component } from 'reactn';
 import './skull.css';
 import PlayerTile from './playerTile/playerTile';
 import Finish from './finish/finish';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 class Skull extends Component {
   constructor(props) {
     super(props);
-    this.state = { betAmount: 0, dimensions: null }
+    this.state = { betAmount: this.getMinBet(), dimensions: null }
   }
 
   componentDidMount() {
@@ -27,12 +28,22 @@ class Skull extends Component {
     });
   }
 
-  getMinBet(game) {
-    return Math.max(...game.players.map(p => p.state.currentBet), 0) + 1;
+  componentDidUpdate() {
+    var max = this.getMaxBet();
+    var min = this.getMinBet(); 
+    if (max < this.state.betAmount || this.state.betAmount < min) {
+      this.setState({ betAmount: Math.min(Math.max(this.state.betAmount, min), max) });
+    }
   }
 
-  getMaxBet(game) {
-    return game.players.reduce((t, p) => t + p.state.playedCards.length, 0)
+  getMinBet() {
+    var game = this.global.game;
+    return Math.min(Math.max(...game.players.map(p => p.state.currentBet), 0) + 1, this.getMaxBet());
+  }
+
+  getMaxBet() {
+    var game = this.global.game;
+    return Math.max(game.players.reduce((t, p) => t + p.state.playedCards.length + p.state.revealedCards.length, 0), 1)
   }
 
   getTilePosition(i) {
@@ -64,8 +75,11 @@ class Skull extends Component {
     }
   }
 
-  onBetAmountChange = (event) =>
-    this.setState({ betAmount: event.target.value })
+  increaseBet = () =>
+    this.setState({ betAmount: this.state.betAmount + 1 })
+
+  decreaseBet = () =>
+    this.setState({ betAmount: this.state.betAmount - 1 })
 
   render() {
     var game = this.global.game;
@@ -75,15 +89,14 @@ class Skull extends Component {
     var cleanUp = game.state.phase === "cleanUp";
 
     var players = game.players;
-    var maxBet = revealingPhase ? Infinity : Math.max(this.getMaxBet(game), 1);
-    var minBet = revealingPhase ? 0 : Math.min(this.getMinBet(game), maxBet);
+    var maxBet = Math.max(this.getMaxBet(), 1);
+    var minBet = Math.min(this.getMinBet(), maxBet);
     var userIndex = players.findIndex(p => p.userId === this.global.user.userId);
     var user = players[userIndex];
     var currentTurnPlayer = players.find(p => p.state.currentTurn);
     players = [...players.slice(userIndex), ...players.slice(0, userIndex)];
 
     var canBet = user.state.currentTurn && user.state.playedCards.length > 0 && (playingPhase || bettingPhase);
-    var betAmount = Math.min(Math.max(this.state.betAmount, minBet), maxBet);
 
     var actionText = user.state.currentTurn ? 'You' : currentTurnPlayer.displayName;
     if (playingPhase) {
@@ -125,17 +138,18 @@ class Skull extends Component {
         <div className="skull-container" ref={el => (this.container = el)}>
           <div className="panel left">
             <div id="controls" className="centered">
-              <button onClick={() => this.sendMove("bet", betAmount)} disabled={!canBet}>
+              <button onClick={() => this.sendMove("bet", this.state.betAmount)} disabled={!canBet}>
                 Bet
-            </button>
-              <input
-                type="number"
-                min={minBet}
-                max={maxBet}
-                disabled={!canBet}
-                value={betAmount}
-                onChange={this.onBetAmountChange}>
-              </input>
+              </button>
+              <button className="small" onClick={this.decreaseBet} disabled={!canBet || this.state.betAmount <= minBet}>
+                <FontAwesomeIcon icon="minus" />
+              </button>
+              <div id="betAmount">
+                {this.state.betAmount}
+              </div>
+              <button className="small" onClick={this.increaseBet} disabled={!canBet || this.state.betAmount >= maxBet} >
+                <FontAwesomeIcon icon="plus" />
+              </button>
               <br />
               <button disabled={!user.state.currentTurn || !bettingPhase}
                 onClick={() => this.sendMove("pass", null)}>Pass
@@ -156,7 +170,7 @@ class Skull extends Component {
                 user={user}
                 playerIsUser={i === 0}
                 sendMove={this.sendMove}
-                animate={this.props.animate}/>)
+                animate={this.props.animate} />)
           }
         </div>
       </>
