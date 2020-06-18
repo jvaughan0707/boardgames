@@ -11,14 +11,6 @@
   margin-bottom: 20px;
 }
 
-.game-tile h3 {
-  margin: 0;
-  padding: 10px;
-  text-align: center;
-  border: 1px solid black;
-  width: 130px;
-}
-
 .game-tile .thumbnail-container {
   height: 150px;
   width: 150px;
@@ -29,7 +21,7 @@
 
 .game-tile {
   width: 150px;
-  margin: 0 10px;
+  margin: 10px;
 }
 
 .game-tile:enabled {

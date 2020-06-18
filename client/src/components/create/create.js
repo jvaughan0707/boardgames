@@ -22,7 +22,6 @@ class Create extends Component {
                 <div className="thumbnail-container">
                   <img className="thumbnail" src={game.img} alt={game.title}></img>
                 </div>
-                <h3>{game.title}</h3>
               </div>
             )
           })
