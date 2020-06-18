@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const phases = { playing: 'playing', betting: 'betting', revealing: 'revealing', cleanUp: 'cleanUp' };
 
-class SkullService {
+class Skull {
   constructor(game) {
     var stateChain = [];
 
@@ -116,24 +116,21 @@ class SkullService {
       return stateChain;
     }
 
-    this.validateAction = (currentPlayer, action, data, onError) => {
+    this.validateAction = (currentPlayer, action, data) => {
       if (!currentPlayer.state.public.currentTurn) {
-        onError('Its not your turn');
-        return;
+        throw { name: "ActionError", message:'Its not your turn'};
       }
 
       switch (action) {
         case "playCard":
           if (game.state.public.phase !== phases.playing) {
-            onError('You cannot play cards at this time')
-            return;
+            throw { name: "ActionError", message:'You cannot play cards at this time'};
           }
 
           var cardIndex = currentPlayer.state.private.hand.findIndex(c => c.id == data);
 
           if (cardIndex < 0) {
-            onError('Specified card not found')
-            return;
+            throw { name: "ActionError", message:'Specified card not found'};
           }
 
           setNextTurnPlayer(currentPlayer);
@@ -160,39 +157,33 @@ class SkullService {
               game.state.public.phase = phases.betting;
             }
             else {
-              onError('You must play a card before betting')
-              return;
+              throw { name: "ActionError", message:'You must play a card before betting'};
             }
           }
           else if (game.state.public.phase !== phases.betting) {
-            onError('Cannot bet at this time');
-            return;
+            throw { name: "ActionError", message:'Cannot bet at this time'};
           }
 
           if (currentPlayer.state.public.passed) {
-            onError('You have already passed for this round')
-            return;
+            throw { name: "ActionError", message:'You have already passed for this round'};
           }
 
           var bet = Number(data)
 
           if (bet !== Math.round(bet)) {
-            onError('Bet amount must be a whole number')
-            return;
+            throw { name: "ActionError", message:'Bet amount must be a whole number'};
           }
 
           var highestBet = Math.max(...game.players.map(p => p.state.public.currentBet));
 
           if (bet <= highestBet) {
-            onError('Bet must be higher than the current highest bid (' + highestBet + ')')
-            return;
+            throw { name: "ActionError", message:'Bet must be higher than the current highest bid (' + highestBet + ')'};
           }
 
           var totalPlayed = game.players.reduce((t, p) => t + p.state.public.playedCards.length, 0);
 
           if (bet > totalPlayed) {
-            onError('Bet cannot be higher than the total number of played cards (' + totalPlayed + ')')
-            return;
+            throw { name: "ActionError", message:'Bet cannot be higher than the total number of played cards (' + totalPlayed + ')'};
           }
 
           currentPlayer.state.public.currentBet = bet;
@@ -216,20 +207,17 @@ class SkullService {
           break;
         case "pass":
           if (game.state.public.phase !== phases.betting) {
-            onError('Cannot pass at this time');
-            return;
+            throw { name: "ActionError", message:'Cannot pass at this time'};
           }
 
           if (currentPlayer.state.public.passed) {
-            onError('You have already passed for this round')
-            return;
+            throw { name: "ActionError", message:'You have already passed for this round'};
           }
 
           var remainingPlayersCount = game.players.filter(p => p.state.public.isAlive && !p.state.public.passed).length;
 
           if (remainingPlayersCount == 1) {
-            onError('You cannot pass as the final player')
-            return;
+            throw { name: "ActionError", message:'You cannot pass as the final player'};
           }
 
           if (remainingPlayersCount == 2) {
@@ -244,28 +232,24 @@ class SkullService {
           break;
         case "revealCard":
           if (game.state.public.phase !== phases.revealing) {
-            onError('Cannot reveal at this time');
-            return;
+            throw { name: "ActionError", message:'Cannot reveal at this time'};
           }
 
           if (currentPlayer.passed) {
-            onError('You have already passed for this round');
-            return;
+            throw { name: "ActionError", message:'You have already passed for this round'};
           }
 
           var userId = data;
 
           if (currentPlayer.userId !== userId) {
             if (currentPlayer.state.public.playedCards.length > 0) {
-              onError('You must reveal all of your own cards first');
-              return;
+              throw { name: "ActionError", message:'You must reveal all of your own cards first'};
             }
 
             var targetPlayer = game.players.find(p => p.userId == userId);
 
             if (!targetPlayer) {
-              onError('Selected user not found');
-              return;
+              throw { name: "ActionError", message:'Selected user not found'};
             }
           }
           else {
@@ -275,8 +259,7 @@ class SkullService {
           var card = targetPlayer.state.internal.playedCards.pop();
 
           if (!card) {
-            onError('Target player has no cards left');
-            return;
+            throw { name: "ActionError", message:'Target player has no cards left'};
           }
 
           targetPlayer.state.public.playedCards.pop();
@@ -344,4 +327,4 @@ class SkullService {
   }
 }
 
-module.exports = SkullService;
+module.exports = Skull;

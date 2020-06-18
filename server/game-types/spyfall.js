@@ -1,6 +1,6 @@
 const _ = require('lodash');
 
-class SpyfallService {
+class Spyfall {
   constructor(game) {
     var stateChain = [];
 
@@ -62,7 +62,7 @@ class SpyfallService {
       return stateChain;
     }
 
-    this.validateAction = (currentPlayer, action, data, onError) => {
+    this.validateAction = (currentPlayer, action, data) => {
       var pause = () => {
         var timerFrom = new Date();
         var timerLength = Math.max(0, game.state.public.timerLength - (timerFrom - game.state.public.timerFrom));
@@ -86,24 +86,21 @@ class SpyfallService {
       switch (action) {
         case "nominate":
           if (game.state.public.paused) {
-            onError("Timer is already paused, you must wait before you can nominate a player");
-            return;
+            throw { name: "ActionError", message:"Timer is already paused, you must wait before you can nominate a player"};
           }
 
           if (!currentPlayer.state.public.canNominate) {
-            onError("You have already nominated a player this round");
-            return;
+            throw { name: "ActionError", message:"You have already nominated a player this round"};
           }
 
           if (data == currentPlayer.userId) {
-            onError("You cannot nominate yourself");
-            return;
+            throw { name: "ActionError", message:"You cannot nominate yourself"};
           }
 
           var targetPlayer = game.players.find(p => p.userId == data);
 
           if (!targetPlayer) {
-            onError("Target player not found");
+            throw { name: "ActionError", message:"Target player not found"};
           }
 
           pause();
@@ -123,14 +120,12 @@ class SpyfallService {
               game.players[0].state.public.vote = false;
             }
             else {
-              onError("There is no vote in progress");
-              return;
+              throw { name: "ActionError", message:"There is no vote in progress"};
             }
           }
 
           if (currentPlayer.state.public.vote !== null) {
-            onError("You have already cast your vote");
-            return;
+            throw { name: "ActionError", message:"You have already cast your vote"};
           }
 
           currentPlayer.state.public.vote = data;
@@ -173,26 +168,22 @@ class SpyfallService {
           break;
         case "guessLocation":
           if (!currentPlayer.state.private.spy) {
-            onError("You are not a spy so cannot guess the location");
-            return;
+            throw { name: "ActionError", message:"You are not a spy so cannot guess the location"};
           }
 
           if (game.state.public.nominatedPlayer) {
-            onError("There is a vote in progress, you must wait before you can guess the location");
-            return;
+            throw { name: "ActionError", message:"There is a vote in progress, you must wait before you can guess the location"};
           }
 
           if (currentPlayer.state.public.locationGuess) {
-            onError("You have already guessed the location this round");
-            return;
+            throw { name: "ActionError", message:"You have already guessed the location this round"};
           }
           if (!game.state.public.paused) {
             pause();
           }
 
           if (game.state.public.timerLength <= 0) {
-            onError("You cannot guess the location after the timer has run out");
-            return;
+            throw { name: "ActionError", message:"You cannot guess the location after the timer has run out"};
           }
 
           currentPlayer.state.public.spy = true;
@@ -208,7 +199,7 @@ class SpyfallService {
 
           break;
         default:
-          throw 'Invalid action';
+          throw { name: "ActionError", message:"Invalid action"};
       }
       return stateChain;
     }
@@ -216,7 +207,7 @@ class SpyfallService {
 
 }
 
-module.exports = SpyfallService;
+module.exports = Spyfall;
 
 const locations = [
   { id: '1', name: 'Airplane', roles: ['First Class Passenger', 'Air Marshall', 'Mechanic', 'Economy Class Passenger', 'Stewardess', 'Co-Pilot', 'Captain', 'Stewardess', 'Economy Class Passenger', 'Child'] },

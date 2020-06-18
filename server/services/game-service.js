@@ -282,29 +282,20 @@ class GameService {
 
     this.validateAction = (gameId, action, data, onError, retryCount) => {
       retryCount = retryCount || 0;
-      var logError = (err) => {
-        console.error(new Date(), err, { gameId, action, data, retryCount })
-        if (onError) {
-          onError(err);
-        }
-      }
 
       return getById(gameId)
         .then(game => {
           if (!game) {
-            logError("Game not found");
-            return;
+            throw { name: "ActionError", message: "Game not found"};
           }
           var currentPlayer = game.players.find(p => p.userId == userId);
 
           if (!currentPlayer) {
-            logError('You are not in this game');
-            return;
+            throw { name: "ActionError", message: 'You are not in this game'};
           }
 
           if (!currentPlayer.active) {
-            logError('You are not currently active in this game')
-            return;
+            throw { name: "ActionError", message: 'You are not currently active in this game'};
           }
 
           var stateChain = getType(game).validateAction(
@@ -314,19 +305,23 @@ class GameService {
             logError);
           saveAndEmit(game, stateChain).catch(
             err => {
-              console.error(new Date(), err, { gameId, action, data, retryCount })
               if (err.name == "VersionError" && retryCount < 10) {
                 this.validateAction(gameId, action, data, onError, retryCount + 1);
               }
               else {
-                onError("Unkown error. Please try again.")
+                throw err;
               }
             });
         })
         .catch(err => {
           console.error(new Date(), err, { gameId, action, data, retryCount, userId })
-          onError("Unkown error. Please refresh and try again.")
-        })
+          if (err.name == "ActionError") {
+            onError(err.message);
+          }
+          else {
+            onError("Unkown error. Please refresh and try again.")
+          }
+        });
     }
   }
 }

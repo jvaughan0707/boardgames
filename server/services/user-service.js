@@ -27,7 +27,11 @@ class UserService {
       else {
         createUser();
       }
-    }).then(doc => ({ userId: doc._id.toString(), userKey: doc.key }))
+    })
+      .then(doc => ({ userId: doc._id.toString(), userKey: doc.key }))
+      .catch(err => {
+        console.error(new Date(), err, { userId, userKey })
+      })
   }
 }
 
