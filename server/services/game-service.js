@@ -301,8 +301,7 @@ class GameService {
           var stateChain = getType(game).validateAction(
             currentPlayer,
             action,
-            data,
-            logError);
+            data);
           saveAndEmit(game, stateChain).catch(
             err => {
               if (err.name == "VersionError" && retryCount < 10) {

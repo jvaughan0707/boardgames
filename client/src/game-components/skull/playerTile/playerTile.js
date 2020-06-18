@@ -16,8 +16,8 @@ class PlayerTile extends Component {
     this.cardBack = getBackground(0);
     this.flower = getBackground(1);
     this.skull = getBackground(2);
-    this.baseBack = getBackground(3);
-    this.baseFront = getBackground(4);
+    this.baseFront = getBackground(3);
+    this.baseBack = getBackground(4);
 
     switch (this.colour) {
       case 'gold':
