@@ -10,7 +10,7 @@ class PlayerTile extends Component {
     
     var getBackground = index => {
       return `url(${cardSet}) 
-        ${index * 25}% 0 /541% no-repeat`;
+        ${index * 25 + 0.25/(index+1)}% 0px /542% no-repeat`;
     }
 
     this.cardBack = getBackground(0);
