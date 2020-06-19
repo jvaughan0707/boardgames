@@ -1,23 +1,10 @@
 import React, { Component } from 'reactn';
 import Tile from '../../common/tile/tile'
 import './playerTile.css';
-const images = require.context('../../../resources/skull', true);
 
 class PlayerTile extends Component {
   componentDidMount() {
     this.colour = this.props.player.state.colour;
-    var cardSet = images('./' + this.colour + '.png');
-    
-    var getBackground = index => {
-      return `url(${cardSet}) 
-        ${index * 25 + 0.25/(index+1)}% 0px /542% no-repeat`;
-    }
-
-    this.cardBack = getBackground(0);
-    this.flower = getBackground(1);
-    this.skull = getBackground(2);
-    this.baseFront = getBackground(3);
-    this.baseBack = getBackground(4);
 
     switch (this.colour) {
       case 'gold':
@@ -64,14 +51,14 @@ class PlayerTile extends Component {
                 'I bet ' + player.state.currentBet}
             </div>
           }
-          <Tile frontImg={this.baseFront}
-            backImg={this.baseBack}
+          <Tile frontImg={'base-front'}
+            backImg={'base-back'}
             colour={player.state.score === 1 ? this.tileColour : '#222'}
             posX={this.props.playerIsUser ? 135 : 150}
             posY={-5}
             rotateX={55}
             rotateY={player.state.score === 1 ? 180 : 0}
-            className="base-tile"
+            className={`base-tile ${player.state.colour}`}
             animated={this.props.animate} />
           {
             //Needs to be one JSX expression so that CSS animations work
@@ -79,10 +66,10 @@ class PlayerTile extends Component {
               ...player.state.hand.map((card, index) =>
                 <Tile key={card.id}
                   colour={this.tileColour}
-                  frontImg={this.getCardBackground(card)}
-                  backImg={this.cardBack}
+                  frontImg={card.value || 'card-back'}
+                  backImg={'card-back'}
                   click={playingPhase && this.props.playerIsUser && player.state.currentTurn ? () => this.props.sendMove("playCard", card.id) : null}
-                  className='card'
+                  className={`card ${player.state.colour}`}
                   animated={this.props.animate}
                   posX={this.props.playerIsUser ? 10 + index * 112 : 5 + index * 20}
                   posY={this.props.playerIsUser ? 110 : 5}
@@ -92,8 +79,8 @@ class PlayerTile extends Component {
               ...player.state.playedCards.map((card, index) =>
                 <Tile key={card.id}
                   colour={this.tileColour}
-                  frontImg={this.getCardBackground(card)}
-                  backImg={this.cardBack}
+                  frontImg={card.value || 'card-back'}
+                  backImg={'card-back'}
                   click={revealingPhase && user.state.currentTurn && (this.props.playerIsUser || user.state.playedCards.length === 0) ? () => this.props.sendMove("revealCard", player.userId) : null}
                   posX={this.props.playerIsUser ? 177 : 195}
                   posY={2 - index * 7}
@@ -101,14 +88,14 @@ class PlayerTile extends Component {
                   rotateY={-180}
                   zIndex={5 + index}
                   animated={this.props.animate}
-                  className="card" />
+                  className={`card ${player.state.colour}`} />
               ),
               ...player.state.revealedCards.map((card, index) =>
                 <Tile key={card.id}
                   colour={this.tileColour}
-                  frontImg={this.getCardBackground(card)}
-                  backImg={this.cardBack}
-                  className="card"
+                  frontImg={card.value || 'card-back'}
+                  backImg={'card-back'}
+                  className={`card ${player.state.colour}`}
                   animated={this.props.animate}
                   posX={330}
                   posY={15 - index * 7}
@@ -121,15 +108,6 @@ class PlayerTile extends Component {
       </div>
     );
   } 
-
-  getCardBackground(card) {
-    if (card.value === 'skull') {
-      return this.skull;
-    } else if (card.value === 'flower') {
-      return this.flower;
-    }
-    return null;
-  }
 }
 
 export default PlayerTile

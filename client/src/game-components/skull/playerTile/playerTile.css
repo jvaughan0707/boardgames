@@ -97,6 +97,49 @@
   border-radius: 100%;
 }
 
+.tile .tile-image {
+   background-size: 540%;
+}
+
+.tile.blue .tile-image {
+  background-image: url('../../../resources/skull/blue.png');
+}
+.tile.gold .tile-image {
+  background-image: url('../../../resources/skull/gold.png');
+}
+.tile.green .tile-image {
+  background-image: url('../../../resources/skull/green.png');
+}
+.tile.pink .tile-image {
+  background-image: url('../../../resources/skull/pink.png');
+}
+.tile.purple .tile-image {
+  background-image: url('../../../resources/skull/purple.png');
+}
+.tile.red .tile-image {
+  background-image: url('../../../resources/skull/red.png');
+}
+
+.tile .card-back {
+  background-position: 0 0;
+}
+
+.tile .flower {
+  background-position: 25% 0 ;
+}
+
+.tile .skull {
+  background-position: 50% 0;
+}
+
+.tile .base-front {
+  background-position: 75% 0;
+}
+
+.tile .base-back {
+  background-position: 100% 0;
+}
+
 .base-tile {
   width: 27%;
   padding-top: 27%;

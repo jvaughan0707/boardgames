@@ -11,9 +11,9 @@ export default function Card(props) {
         <div className='tile-y-plane' style={{ transform: `rotateY(${props.rotateY || 0}deg)` }}>
           {
             props.frontImg &&
-            <div className="tile-front" style={{ background: props.frontImg, boxShadow: props.rotateX ? `0px 5px 0px ${props.colour}` : 'none' }} />
+            <div className={`tile-front tile-image ${props.frontImg}`} style={{ boxShadow: props.rotateX ? `0px 5px 0px ${props.colour}` : 'none' }} />
           }
-          <div className="tile-back" style={{ background: props.backImg, boxShadow: props.rotateX ? `0px 5px 0px ${props.colour}` : 'none' }} />
+          <div className={`tile-back tile-image ${props.backImg}`} style={{ boxShadow: props.rotateX ? `0px 5px 0px ${props.colour}` : 'none' }} />
         </div>
       </div>
     </div>
