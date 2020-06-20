@@ -4,6 +4,10 @@
   max-width: 100%;
 }
 
+.game-tile.disabled {
+  filter: grayscale();
+}
+
 #game-tiles {
   justify-content: space-between;
   display: grid;

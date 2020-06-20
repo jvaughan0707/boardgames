@@ -2,7 +2,13 @@ import React, { Component } from 'reactn';
 import './create.css';
 const skullImg = require('../../resources/skull/title.png');
 const spyfallImg = require('../../resources/spyfall/title.jpg');
-const games = [{ type: "skull", title: "Skull", img: skullImg }, { type: "spyfall", title: "Spyfall", img: spyfallImg }]
+const mascaradeImg = require('../../resources/mascarade/title.jpg');
+
+const games = [
+  { type: "skull", title: "Skull", img: skullImg }, 
+  { type: "spyfall", title: "Spyfall", img: spyfallImg },
+  { type: "mascarade", title: "Mascarade", img: mascaradeImg, disabled: true },
+]
 
 class Create extends Component {
   createLobby = (type) => {
@@ -17,8 +23,9 @@ class Create extends Component {
         <div id="game-tiles">
         {
           games.map(game => {
+            var canCreate = this.props.allowCreate && !game.disabled;
             return (
-              <div disabled={!this.props.allowCreate} className={`game-tile ${this.props.allowCreate ? 'clickable' : ''}`}  onClick={this.props.allowCreate ? () => this.createLobby(game.type) : null} key={game.type}>
+              <div className={`game-tile ${ canCreate ? 'clickable' : ''} ${ game.disabled ? 'disabled' : ''}`}  onClick={canCreate ? () => this.createLobby(game.type) : null} key={game.type}>
                 <div className="thumbnail-container">
                   <img className="thumbnail" src={game.img} alt={game.title}></img>
                 </div>
