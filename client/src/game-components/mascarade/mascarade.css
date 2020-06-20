@@ -1,0 +1,95 @@
+#spyfall-container {
+  padding: 50px 0;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+#locations {
+  margin-left: 65px;
+  min-width: 625px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 125px);
+  grid-template-rows: repeat(auto-fill, 85px);
+  float: left;
+}
+
+.location {
+  box-sizing: border-box;
+  border-radius: 7px;
+  width: 125px;
+  height: 85px;
+  position: relative;
+  font-size: 40px;
+  line-height: 85px;
+  text-align: center;
+  color: #404040;
+}
+
+.location svg {
+  margin: 0 5px;
+  stroke: black;
+  stroke-width: 30px;
+}
+
+.location:hover {
+  transform: scale(2);
+  z-index: 10;
+}
+
+.location.selected {
+  border: 2px solid white;
+}
+
+#info > *{
+  margin-bottom: 20px;
+
+}
+
+#info, #players {
+  width: 220px;
+  margin: 10px 0 0 50px;
+}
+
+.player {
+  width: 200px;
+  background-color: white;
+  border-radius: 10px;
+  border: 2px solid #173753;
+  box-shadow: 5px 2px 1px #173753;
+  padding: 5px;
+  height: 40px;
+  margin-bottom: 5px;
+}
+
+.player button {
+  float: right;
+}
+
+.player, .player-inner {
+  height: 40px;
+  transition: transform 1s linear, background-color 0s 0.5s, box-shadow 1s linear;
+}
+.player.spy {
+  transform: rotateX(180deg);
+  background-color: slategray;
+  box-shadow: 5px -2px 1px #173753;
+}
+
+.player.spy .player-inner {
+  transform: rotateX(180deg);
+}
+
+#players button, #info button {
+  margin-top: 5px;
+  height: 30px;
+  font-size: 16px;
+}
+
+#players h3 {
+  font-size: 15px;
+  margin: 0;
+  display: inline;
+}
+.accusations svg {
+  color: darkslategrey;
+}

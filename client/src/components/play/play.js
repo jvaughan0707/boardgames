@@ -1,6 +1,7 @@
 import React, { Component } from 'reactn';
 import Skull from '../../game-components/skull/skull';
 import Spyfall from '../../game-components/spyfall/spyfall';
+import Mascarade from '../../game-components/mascarade/mascarade';
 
 class Play extends Component {
   constructor() {
@@ -13,7 +14,10 @@ class Play extends Component {
       case 'skull':
         return <Skull animate={this.state.animate} allowAction={!this.state.updating && this.global.webSocket.connected} />
       case 'spyfall':
-        return <Spyfall animate={true} allowAction={!this.state.updating && this.global.webSocket.connected} />
+        return <Spyfall animate={this.state.animate} allowAction={!this.state.updating && this.global.webSocket.connected} />
+      case 'mascarade':
+        return <Mascarade animate={this.state.animate} allowAction={!this.state.updating && this.global.webSocket.connected} />
+
       default:
         break;
     }

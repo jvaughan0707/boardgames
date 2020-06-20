@@ -1,0 +1,12 @@
+h2 {
+  text-align: center;
+}
+
+.buttons {
+  width: 200px;
+  margin: auto;
+}
+
+.buttons button {
+ width: 80px
+}

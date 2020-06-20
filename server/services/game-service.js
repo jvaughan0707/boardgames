@@ -1,7 +1,8 @@
 const Game = require('../models/game');
 const Lobby = require('../models/lobby');
-const SkullService = require('../game-types/skull');
-const SpyfallService = require('../game-types/spyfall');
+const Skull = require('../game-types/skull');
+const Spyfall = require('../game-types/spyfall');
+const Mascarade = require('../game-types/mascarade');
 const _ = require('lodash');
 
 var getLobbyObject = function (doc) {
@@ -53,9 +54,9 @@ class GameService {
     var getType = function (game) {
       switch (game.type) {
         case 'skull':
-          return new SkullService(game);
+          return new Skull(game);
         case 'spyfall':
-          return new SpyfallService(game);
+          return new Spyfall(game);
         default:
           throw 'Invalid type';
       }
@@ -144,7 +145,7 @@ class GameService {
           io.emit('lobbyCreated', getLobbyObject(lobby));
           this.join(lobby.id, displayName);
         })
-        .catch(err => console.error(new Date(), err, { lobbyId, userId }));
+        .catch(err => console.error(new Date(), err, { type, userId, displayName, rematchId }));
     }
 
     this.rematch = (gameId, displayName) => {
