@@ -1,5 +1,5 @@
 import React, { Component } from 'reactn';
-import './spyfall.css';
+import './spyfall.scss';
 import Timer from '../common/timer/timer';
 import Finish from './finish/finish';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

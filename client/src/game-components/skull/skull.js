@@ -1,5 +1,5 @@
 import React, { Component } from 'reactn';
-import './skull.css';
+import './skull.scss';
 import PlayerTile from './playerTile/playerTile';
 import Finish from './finish/finish';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -135,7 +135,7 @@ class Skull extends Component {
           game.finished &&
           <Finish />
         }
-        <div className="skull-container" ref={el => (this.container = el)}>
+        <div id="skull-container" ref={el => (this.container = el)}>
           <div className="panel left">
             <div id="controls" className="centered">
               <button onClick={() => this.sendMove("bet", this.state.betAmount)} disabled={!canBet}>

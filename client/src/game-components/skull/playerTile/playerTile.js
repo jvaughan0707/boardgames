@@ -1,6 +1,6 @@
 import React, { Component } from 'reactn';
 import Tile from '../../common/tile/tile'
-import './playerTile.css';
+import './playerTile.scss';
 
 class PlayerTile extends Component {
   componentDidMount() {
@@ -51,8 +51,8 @@ class PlayerTile extends Component {
                 'I bet ' + player.state.currentBet}
             </div>
           }
-          <Tile frontImg={'base-front'}
-            backImg={'base-back'}
+          <Tile frontImgClass={'base-front'}
+            backImgClass={'base-back'}
             colour={player.state.score === 1 ? this.tileColour : '#222'}
             posX={this.props.playerIsUser ? 135 : 150}
             posY={-5}
@@ -66,8 +66,8 @@ class PlayerTile extends Component {
               ...player.state.hand.map((card, index) =>
                 <Tile key={card.id}
                   colour={this.tileColour}
-                  frontImg={card.value || 'card-back'}
-                  backImg={'card-back'}
+                  frontImgClass={card.value || 'card-back'}
+                  backImgClass={'card-back'}
                   click={playingPhase && this.props.playerIsUser && player.state.currentTurn ? () => this.props.sendMove("playCard", card.id) : null}
                   className={`card ${player.state.colour}`}
                   animated={this.props.animate}
@@ -79,8 +79,8 @@ class PlayerTile extends Component {
               ...player.state.playedCards.map((card, index) =>
                 <Tile key={card.id}
                   colour={this.tileColour}
-                  frontImg={card.value || 'card-back'}
-                  backImg={'card-back'}
+                  frontImgClass={card.value || 'card-back'}
+                  backImgClass={'card-back'}
                   click={revealingPhase && user.state.currentTurn && (this.props.playerIsUser || user.state.playedCards.length === 0) ? () => this.props.sendMove("revealCard", player.userId) : null}
                   posX={this.props.playerIsUser ? 177 : 195}
                   posY={2 - index * 7}
@@ -93,8 +93,8 @@ class PlayerTile extends Component {
               ...player.state.revealedCards.map((card, index) =>
                 <Tile key={card.id}
                   colour={this.tileColour}
-                  frontImg={card.value || 'card-back'}
-                  backImg={'card-back'}
+                  frontImgClass={card.value || 'card-back'}
+                  backImgClass={'card-back'}
                   className={`card ${player.state.colour}`}
                   animated={this.props.animate}
                   posX={330}

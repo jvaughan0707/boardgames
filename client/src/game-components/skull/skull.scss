@@ -1,4 +1,4 @@
-.skull-container {
+#skull-container {
   max-width: calc(100% - 10px);
   width: 171vh;
   height: calc(100% - 10px);
@@ -8,7 +8,7 @@
 }
 
 @media only screen and (min-width: 651px) {
-  .skull-container {
+  #skull-container {
     position: absolute;
     top: 0;
     left: 50%;
@@ -23,16 +23,16 @@
   }
 }
 @media only screen and (max-width: 650px) {
-  .skull-container .panel {
+  #skull-container .panel {
     position: initial;
     padding: 0;
   }
 
-  .skull-container {
+  #skull-container {
     padding-top: 30px;
   }
 
-  .skull-container #controls {
+  #skull-container #controls {
     background: none;
     border: none;
     position: absolute;
@@ -43,7 +43,7 @@
     z-index: 2;
   }
 
-  .skull-container #actionText {
+  #skull-container #actionText {
     width: 100%;
     box-sizing: border-box;
     height: 30px;
@@ -51,7 +51,7 @@
     padding: 7px;
   }
 
-  .skull-container .panel.right {
+  #skull-container .panel.right {
     width: 98%;
     margin-bottom: 5px;
   }
