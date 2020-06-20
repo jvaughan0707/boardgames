@@ -96,25 +96,26 @@
 
   .tile .tile-image {
     background-size: 540%;
+    background-repeat: repeat-y;
   }
 
   .tile.blue .tile-image {
-    background-image: url('../../../resources/skull/blue.png');
+    background-image: url('../../../resources/skull/blue-min.png');
   }
   .tile.gold .tile-image {
-    background-image: url('../../../resources/skull/gold.png');
+    background-image: url('../../../resources/skull/gold-min.png');
   }
   .tile.green .tile-image {
-    background-image: url('../../../resources/skull/green.png');
+    background-image: url('../../../resources/skull/green-min.png');
   }
   .tile.pink .tile-image {
-    background-image: url('../../../resources/skull/pink.png');
+    background-image: url('../../../resources/skull/pink-min.png');
   }
   .tile.purple .tile-image {
-    background-image: url('../../../resources/skull/purple.png');
+    background-image: url('../../../resources/skull/purple-min.png');
   }
   .tile.red .tile-image {
-    background-image: url('../../../resources/skull/red.png');
+    background-image: url('../../../resources/skull/red-min.png');
   }
 
   .tile .card-back {
