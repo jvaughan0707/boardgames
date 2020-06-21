@@ -26,6 +26,7 @@ class Create extends Component {
             var canCreate = this.props.allowCreate && !game.disabled;
             return (
               <div className={`game-tile ${ canCreate ? 'clickable' : ''} ${ game.disabled ? 'disabled' : ''}`}  onClick={canCreate ? () => this.createLobby(game.type) : null} key={game.type}>
+                { game.disabled && <h3 className="coming-soon">Coming soon</h3> }
                 <div className="thumbnail-container">
                   <img className="thumbnail" src={game.img} alt={game.title}></img>
                 </div>
