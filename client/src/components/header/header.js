@@ -21,7 +21,7 @@ const Header = (props) => {
         {game && <FontAwesomeIcon icon="sign-out-alt" className="clickable" onClick={props.openLeaveGame} />}
         {game && <FontAwesomeIcon icon="question" className="clickable" onClick={props.openRules} />}
         {user && props.openSettings && <FontAwesomeIcon icon="cog" className="clickable" onClick={props.openSettings} />}
-        {user && !game && <KnockIcon className="clickable" onClick={knock} />}
+        {/* {user && !game && <KnockIcon className="clickable" onClick={knock} />} */}
         <FontAwesomeIcon icon={mute ? "volume-mute" : "volume-up"}  className="clickable" onClick={props.toggleMute} />
       </div>
     </div>

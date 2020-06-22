@@ -143,6 +143,7 @@ class GameService {
         .then(() => new Lobby({ ...getType({ type }).getLobbySettings(), rematchId, players: [] }).save())
         .then(lobby => {
           io.emit('lobbyCreated', getLobbyObject(lobby));
+          io.emit('knock')
           this.join(lobby.id, displayName);
         })
         .catch(err => console.error(new Date(), err, { type, userId, displayName, rematchId }));
@@ -190,6 +191,7 @@ class GameService {
               lobby.players.push(user);
               return lobby.save()
                 .then(() => {
+                  io.emit('knock')
                   io.emit('lobbyPlayerJoined', user, lobbyId);
                 })
             }
@@ -287,16 +289,16 @@ class GameService {
       return getById(gameId)
         .then(game => {
           if (!game) {
-            throw { name: "ActionError", message: "Game not found"};
+            throw { name: "ActionError", message: "Game not found" };
           }
           var currentPlayer = game.players.find(p => p.userId == userId);
 
           if (!currentPlayer) {
-            throw { name: "ActionError", message: 'You are not in this game'};
+            throw { name: "ActionError", message: 'You are not in this game' };
           }
 
           if (!currentPlayer.active) {
-            throw { name: "ActionError", message: 'You are not currently active in this game'};
+            throw { name: "ActionError", message: 'You are not currently active in this game' };
           }
 
           var stateChain = getType(game).validateAction(
