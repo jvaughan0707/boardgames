@@ -36,7 +36,7 @@ class Spyfall extends Component {
               game.players.map(p => (
                 <div key={p.userId} className={`${p.state.spy ? 'spy' : ''} player`}>
                   <div className="player-inner">
-                    <h3>{p.displayName}</h3>
+                    <div className="player-name">{p.displayName}</div>
                     {
                       p !== user &&
                       <button title="You can only do this once per round"
