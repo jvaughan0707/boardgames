@@ -20,8 +20,8 @@ const cookies = new Cookies();
 class App extends Component {
   constructor() {
     super();
-    this.state = { overlay: null, userValidated: false }
-    this.setGlobal({ user: {displayName: cookies.get('displayName')}, webSocket: null, game: null, mute: cookies.get('mute') });
+    this.state = { overlay: null, userValidated: false, knocking: false }
+    this.setGlobal({ user: { displayName: cookies.get('displayName') }, webSocket: null, game: null, mute: cookies.get('mute') });
     this.connect();
   }
 
@@ -64,8 +64,10 @@ class App extends Component {
     webSocket.on('userValidated', this.onUserValidated);
 
     webSocket.on('knock', () => {
-      if (!this.global.mute && !this.global.game) {
+      if (!this.global.mute && !this.global.game && !this.state.knocking) {
+        this.state.knocking = true;
         new Audio(knock).play();
+        setTimeout(() => this.setState({ knocking: false }), 1500);
       }
     });
   }
@@ -82,51 +84,47 @@ class App extends Component {
     this.setState({ userValidated: true });
   }
 
-  
+
   toggleMute = () => {
     var mute = this.global.mute ? 0 : 1;
     this.setCookie("mute", mute);
-    this.setGlobal({mute});
+    this.setGlobal({ mute });
   }
 
   render() {
     return (
       this.state.userValidated ?
 
-      <>
-        <Header openLeaveGame={() => this.setState({ overlay: 'leaveGame' })}
-          openRules={() => this.setState({ overlay: 'rules' })}
-          toggleMute={this.toggleMute} />
-        {
-          this.state.overlay === 'leaveGame' &&
-          <Overlay>
-            <FontAwesomeIcon style={{ position: 'absolute', right: '15px', top: '15px' }}
-              icon="times" onClick={() => this.setState({ overlay: null })} className="clickable" />
-            <h2>Quit</h2>
-            <p>Are you sure you want to quit this game?
+        <>
+          <Header openLeaveGame={() => this.setState({ overlay: 'leaveGame' })}
+            openRules={() => this.setState({ overlay: 'rules' })}
+            toggleMute={this.toggleMute} />
+          {
+            this.state.overlay === 'leaveGame' &&
+            <Overlay close={() => this.setState({ overlay: null })}>
+              <h2>Quit</h2>
+              <p>Are you sure you want to quit this game?
               You wont be able to rejoin and it may impact the game for other players.</p>
-            <div className="buttons">
-              <button onClick={this.quit}>Yes</button>
-              <button onClick={() => this.setState({ overlay: null })}>No</button>
-            </div>
-          </Overlay>
-        }
-        {
-          this.state.overlay === 'rules' &&
-          <Overlay>
-            <FontAwesomeIcon style={{ position: 'absolute', right: '15px', top: '15px' }}
-              icon="times" onClick={() => this.setState({ overlay: null })} className="clickable" />
-            <h2>Rules</h2>
-            {
-              this.getRules(this.global.game.type)
-            }
-          </Overlay>
-        }
+              <div className="buttons">
+                <button onClick={this.quit}>Yes</button>
+                <button onClick={() => this.setState({ overlay: null })}>No</button>
+              </div>
+            </Overlay>
+          }
+          {
+            this.state.overlay === 'rules' &&
+            <Overlay close={() => this.setState({ overlay: null })}>
+              <h2>Rules</h2>
+              {
+                this.getRules(this.global.game.type)
+              }
+            </Overlay>
+          }
 
-        <Auth>
-          <Home />
-        </Auth>
-      </> : 
+          <Auth>
+            <Home />
+          </Auth>
+        </> :
         <Loading />
     );
   }

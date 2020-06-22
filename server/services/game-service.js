@@ -143,7 +143,6 @@ class GameService {
         .then(() => new Lobby({ ...getType({ type }).getLobbySettings(), rematchId, players: [] }).save())
         .then(lobby => {
           io.emit('lobbyCreated', getLobbyObject(lobby));
-          io.emit('knock')
           this.join(lobby.id, displayName);
         })
         .catch(err => console.error(new Date(), err, { type, userId, displayName, rematchId }));

@@ -19,7 +19,12 @@
   background-color: white;
   border-radius: 10px;
   box-shadow: 0 0 75px 50px black;
-  padding: 25px 50px;
+  padding: 15px 50px;
+}
+
+.dialog-content {
+  overflow-y: auto;
+  max-height: 95vh;
 }
 
 .dialog button {
