@@ -5,102 +5,98 @@
   min-width: 400px;
   box-sizing: border-box;
   margin: 5px;
-}
 
-@media only screen and (min-width: 651px) {
-  #skull-container {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
+  @media only screen and (min-width: 651px) {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+
+    #actionText {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+  @media only screen and (max-width: 650px) {
+    padding-top: 30px;
+   
+    div.panel {
+      position: initial;
+      padding: 0;
+    }
+
+    #controls {
+      background: none;
+      border: none;
+      position: absolute;
+      top: 80px;
+      left: 0px;
+      transform: none;
+      box-shadow: none;
+      z-index: 2;
+    }
+
+    #actionText {
+      width: 100%;
+      box-sizing: border-box;
+      height: 30px;
+      font-size: 12px;
+      padding: 7px;
+    }
+
+    div.panel.right {
+      width: 98%;
+      margin-bottom: 5px;
+    }
   }
 
-  #actionText {
+  .panel {
     position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    padding-top: 22%;
+    width: 22%;
   }
-}
-@media only screen and (max-width: 650px) {
-  #skull-container .panel {
-    position: initial;
+
+  .panel.right {
+    left: 75%;
+  }
+
+  .panel.left {
+    left: 1%;
+  }
+
+  .panel > div {
+    box-shadow: 5px 2px 1px #173753;
+    border: 2px solid #173753;
+    width: 140px;
+    height: 80px;
+    border-radius: 10px;
+    background-color: white;
+    padding: 10px;
+  }
+
+  #controls input {
+    width: 35px;
+    height: 20px;
+  }
+
+  #controls button {
+    width: 50px;
+    margin: 10px 15px 5px 0;
+    font-size: 16px;
+  }
+
+  #controls button.small {
+    margin: 0;
+    width: 24px;
     padding: 0;
   }
 
-  #skull-container {
-    padding-top: 30px;
-  }
-
-  #skull-container #controls {
-    background: none;
-    border: none;
-    position: absolute;
-    top: 80px;
-    left: 0px;
-    transform: none;
-    box-shadow: none;
-    z-index: 2;
-  }
-
-  #skull-container #actionText {
-    width: 100%;
-    box-sizing: border-box;
-    height: 30px;
-    font-size: 12px;
-    padding: 7px;
-  }
-
-  #skull-container .panel.right {
-    width: 98%;
-    margin-bottom: 5px;
-  }
-}
-
-.panel {
-  position: absolute;
-  padding-top: 22%;
-  width: 22%;
-}
-
-.panel.right {
-  left: 75%;
-}
-
-.panel.left {
-  left: 1%;
-}
-
-.panel > div {
-  box-shadow: 5px 2px 1px #173753;
-  border: 2px solid #173753;
-  width: 140px;
-  height: 80px;
-  border-radius: 10px;
-  background-color: white;
-  padding: 10px;
-}
-
-#controls input {
-  width: 35px;
-  height: 20px;
-}
-
-#controls button {
-  width: 50px;
-  margin: 10px 15px 5px 0;
-  font-size: 16px;
-}
-
-#controls button.small {
-  margin: 0;
-  width: 24px;
-  padding: 0;
-}
-
-#controls #betAmount {
-  display: inline-block;
-  width: 20px;
-  padding: 2px;
-  text-align: center;
+  #controls #betAmount {
+    display: inline-block;
+    width: 20px;
+    padding: 2px;
+    text-align: center;
+  } 
 }
