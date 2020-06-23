@@ -33,7 +33,7 @@ class Play extends Component {
   }
 
   onGameAction(stateChain) {
-    this.state.stateChain = [...this.state.stateChain, ...stateChain];
+    this.setState({stateChain: [...this.state.stateChain, ...stateChain]});
     
     if (!this.state.updating) {
       this.update();
