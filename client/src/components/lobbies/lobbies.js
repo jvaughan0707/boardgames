@@ -59,7 +59,9 @@ class Lobbies extends Component {
   onLobbyPlayerJoined(user, lobbyId) {
     var lobbies = this.state.lobbies.map(lobby => {
       if (lobby.lobbyId === lobbyId) {
-        lobby.players.push(user);
+        if (!lobby.players.find(p => p.userId === user.userId)) {
+          lobby.players.push(user);
+        }
       }
       return lobby;
     });
