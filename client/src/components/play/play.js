@@ -6,7 +6,7 @@ import Mascarade from '../../game-components/mascarade/mascarade';
 class Play extends Component {
   constructor() {
     super();
-    this.state = { animate: true, updating: false }
+    this.state = { animate: true, updating: false, stateChain: [] }
   }
 
   getGameComponent(game) {
@@ -17,7 +17,6 @@ class Play extends Component {
         return <Spyfall animate={this.state.animate} allowAction={!this.state.updating && this.global.webSocket.connected} />
       case 'mascarade':
         return <Mascarade animate={this.state.animate} allowAction={!this.state.updating && this.global.webSocket.connected} />
-
       default:
         break;
     }
@@ -34,28 +33,32 @@ class Play extends Component {
   }
 
   onGameAction(stateChain) {
-    var setNext = () => {
-      if (stateChain.length > 0) {
-        let { game, animate, pause } = stateChain.shift();
-        if (game) {
-          this.setState({ updating: true, animate: animate });
-          this.setGlobal({ game });
-          if (stateChain.length > 0) {
-            setTimeout(
-              () => {
-                setNext();
-              },
-              (pause || 0) + (animate ? 1000 : 100)
-            );
-          }
-          else {
-            this.setState({ updating: false });
-          }
+    this.state.stateChain = [...this.state.stateChain, ...stateChain];
+    
+    if (!this.state.updating) {
+      this.update();
+    }
+  }
+  
+  update = () => {
+    var stateChain = this.state.stateChain;
+    if (stateChain.length > 0) {
+      let { game, animate, pause } = stateChain.shift();
+      if (game) {
+        this.setState({ updating: true, animate, stateChain });
+        this.setGlobal({ game });
+        if (stateChain.length > 0) {
+          this.timeout = setTimeout(
+            () => {
+              this.update();
+            },
+            (pause || 0) + (animate ? 1000 : 100)
+          );
+        }
+        else {
+          this.setState({ updating: false });
         }
       }
-    }
-    if (stateChain && stateChain.length > 0) {
-      setNext();
     }
   }
 

@@ -5,7 +5,6 @@ import Home from "../home/home";
 import Auth from '../auth/auth';
 import { library } from '@fortawesome/fontawesome-svg-core'
 import Overlay from '../overlay/overlay';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SkullRules from '../../game-components/skull/rules/rules';
 import SpyfallRules from '../../game-components/spyfall/rules/rules';
 import { faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faUserSecret, faCheck, faVolumeMute, faVolumeUp, faPlus, faMinus } from '@fortawesome/free-solid-svg-icons'
@@ -65,7 +64,7 @@ class App extends Component {
 
     webSocket.on('knock', () => {
       if (!this.global.mute && !this.global.game && !this.state.knocking) {
-        this.state.knocking = true;
+        this.setState({knocking: true});
         new Audio(knock).play();
         setTimeout(() => this.setState({ knocking: false }), 1500);
       }
