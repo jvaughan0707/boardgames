@@ -130,7 +130,8 @@ class GameService {
 
     this.create = (type, displayName, rematchId) => {
       if (!displayName || displayName.length > 15) {
-        throw 'Invalid display name';
+        console.error(new Date(), 'Invalid display name', { type, userId, displayName, rematchId });
+        return;
       }
 
       return Lobby.findOne({ players: { $elemMatch: { userId } } })
@@ -172,7 +173,8 @@ class GameService {
 
     this.join = (lobbyId, displayName) => {
       if (!displayName || displayName.length > 15) {
-        throw 'Invalid display name';
+        console.error(new Date(), 'Invalid display name', { type, userId, displayName, rematchId });
+        return;
       }
 
       return Lobby.findOne({ players: { $elemMatch: { userId } } })
@@ -284,6 +286,7 @@ class GameService {
 
     this.validateAction = (gameId, action, data, onError, retryCount) => {
       retryCount = retryCount || 0;
+      var displayName = null;
 
       return getById(gameId)
         .then(game => {
@@ -295,6 +298,8 @@ class GameService {
           if (!currentPlayer) {
             throw { name: "ActionError", message: 'You are not in this game' };
           }
+
+          displayName = currentPlayer.displayName;
 
           if (!currentPlayer.active) {
             throw { name: "ActionError", message: 'You are not currently active in this game' };
@@ -315,7 +320,7 @@ class GameService {
             });
         })
         .catch(err => {
-          console.error(new Date(), err, { gameId, action, data, retryCount, userId })
+          console.error(new Date(), err, { gameId, action, data, retryCount, userId, displayName })
           if (err.name == "ActionError") {
             onError(err.message);
           }
