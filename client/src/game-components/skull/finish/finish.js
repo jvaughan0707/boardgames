@@ -19,7 +19,7 @@ export default function Finish() {
 
   return (
     <Overlay width={300} height={150 + 35 * game.players.length} zIndex={98} fade={true}>
-      <Confetti width={400} height={200 + 35 * game.players.length} numberOfPieces={200} recycle={false} />
+      <Confetti width={400} height={180 + 35 * game.players.length} numberOfPieces={200} recycle={false} />
       <h2>Winner: {winner.displayName}</h2>
       <h3>Scores:</h3>
       {game.players.sort((a, b) => {
