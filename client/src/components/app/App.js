@@ -21,7 +21,7 @@ class App extends Component {
   constructor() {
     super();
     this.state = { overlay: null, userValidated: false, knocking: false }
-    this.setGlobal({ user: { displayName: cookies.get('displayName') }, webSocket: null, game: null, mute: cookies.get('mute') });
+    this.setGlobal({ user: { displayName: cookies.get('displayName') }, webSocket: null, game: null, mute: Number(cookies.get('mute')) });
     this.connect();
   }
 
