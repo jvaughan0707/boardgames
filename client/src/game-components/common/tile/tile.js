@@ -7,7 +7,7 @@ export default function Card(props) {
   var imgStyle = { boxShadow: props.rotateX ? `0px 5px 0px ${props.colour || 'black'}` : 'none' };
   return (
     <div onClick={props.click} className={className}
-      style={{ transform: `translate(${props.posX || 0}%, ${props.posY || 0}%)`, zIndex: props.zIndex }}>
+    style={{ left: `${props.posX || 0}%`, top: `${props.posY || 0}%`, zIndex: props.zIndex }}>
       <div className='tile-x-plane' style={{ transform: `rotateX(${props.rotateX || 0}deg)` }}>
         <div className='tile-y-plane' style={{ transform: `rotateY(${props.rotateY || 0}deg)` }}>
           <div className={`tile-front tile-image ${props.frontImgClass}`} style={imgStyle}>

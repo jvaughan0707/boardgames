@@ -3,7 +3,7 @@
 }
 
 .tile.animated, .tile.animated * {
-  transition: transform 1s, z-index 0s 1s, filter 1s, box-shadow 1s;
+  transition: left 1s, top 1s, transform 1s, z-index 0s 1s, filter 1s, box-shadow 1s;
 }
 
 .tile img {

@@ -54,8 +54,8 @@ class PlayerTile extends Component {
           <Tile frontImgClass={'base-front'}
             backImgClass={'base-back'}
             colour={player.state.score === 1 ? this.tileColour : '#222'}
-            posX={this.props.playerIsUser ? 135 : 150}
-            posY={-5}
+            posX={40.5}
+            posY={-2}
             rotateX={55}
             rotateY={player.state.score === 1 ? 180 : 0}
             className={`base-tile ${player.state.colour}`}
@@ -71,8 +71,8 @@ class PlayerTile extends Component {
                   click={playingPhase && this.props.playerIsUser && player.state.currentTurn ? () => this.props.sendMove("playCard", card.id) : null}
                   className={`card ${player.state.colour}`}
                   animated={this.props.animate}
-                  posX={this.props.playerIsUser ? 10 + index * 112 : 5 + index * 20}
-                  posY={this.props.playerIsUser ? 110 : 5}
+                  posX={this.props.playerIsUser ? 1.5 + index * 25 : 1 + index * 5}
+                  posY={this.props.playerIsUser ? 50 : 5}
                   rotateY={this.props.playerIsUser ? 0 : -180}
                   zIndex={12 - index} />
               ),
@@ -82,8 +82,8 @@ class PlayerTile extends Component {
                   frontImgClass={card.value || 'card-back'}
                   backImgClass={'card-back'}
                   click={revealingPhase && user.state.currentTurn && (this.props.playerIsUser || user.state.playedCards.length === 0) ? () => this.props.sendMove("revealCard", player.userId) : null}
-                  posX={this.props.playerIsUser ? 177 : 195}
-                  posY={2 - index * 7}
+                  posX={43}
+                  posY={this.props.playerIsUser ? 2 - index * 3 : 5 - index * 6}
                   rotateX={55}
                   rotateY={-180}
                   zIndex={5 + index}
@@ -97,8 +97,8 @@ class PlayerTile extends Component {
                   backImgClass={'card-back'}
                   className={`card ${player.state.colour}`}
                   animated={this.props.animate}
-                  posX={330}
-                  posY={15 - index * 7}
+                  posX={74}
+                  posY={this.props.playerIsUser ? 7 - index * 3 : 14 - index * 6}
                   rotateX={55}
                   zIndex={index} />
               )

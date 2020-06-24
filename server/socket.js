@@ -39,5 +39,8 @@ module.exports = (server) => {
 
         ws.on('gameAction', gameService.validateAction);
       })
+      .catch(err => {
+        console.error(new Date(), err, { userId, userKey })
+      })
   });
 }
