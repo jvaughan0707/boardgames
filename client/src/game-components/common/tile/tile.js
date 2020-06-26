@@ -10,7 +10,7 @@ export default function Card(props) {
     style={{ left: `${props.posX || 0}%`, top: `${props.posY || 0}%`, zIndex: props.zIndex }}>
       <div className='tile-x-plane' style={{ transform: `rotateX(${props.rotateX || 0}deg)` }}>
         <div className='tile-y-plane' style={{ transform: `rotateY(${props.rotateY || 0}deg)` }}>
-          <div className={`tile-front tile-image ${props.frontImgClass}`} style={imgStyle}>
+          <div className={`tile-front tile-image ${props.frontImgClass || ''}`} style={imgStyle}>
             {
               props.frontImg &&
               <img src={props.frontImg} alt="card front" />
