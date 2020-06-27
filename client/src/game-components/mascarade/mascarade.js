@@ -75,17 +75,6 @@ class Mascarade extends Component {
         return (<p>Waiting for {currentTurnPlayer.displayName} to take an action.</p>)
       }
     }
-    else if (currentTurnPlayer.state.revealedCards) {
-      if (user.state.currentTurn) {
-        return (<>
-          <p>Press ready once you have seen your card.</p>
-          <button onClick={() => this.sendMove('accept')}>Ready</button>
-        </>);
-      }
-      else {
-        return (<p>{currentTurnPlayer.displayName} is looking at their card.</p>);
-      }
-    }
     else if (currentTurnPlayer.state.claim !== null) {
       if (!user.state.accept && user.state.claim === null) {
         return (
@@ -95,44 +84,84 @@ class Mascarade extends Component {
             <button onClick={() => this.sendMove('challenge')}>Challenge</button>
           </>)
       }
-      else if (currentTurnPlayer.state.playerOptions) {
-        if (user.state.currentTurn) {
-          return (<p>Select a player</p>)
-        }
-        else {
-          return (<p>{currentTurnPlayer.displayName} is selecting a player.</p>);
-        }
-      }
-      else if (currentTurnPlayer.state.selectedCards) {
-        if (currentTurnPlayer.state.selectedCards.every(c => c)) {
-          switch (currentTurnPlayer.state.claim) {
-            case 3: //fool
-              return (<>
-                <p>Choose whether to swap or not.</p>
-                <button onClick={() => this.sendMove('swapOrNot', true)}>Swap</button>
-                <button onClick={() => this.sendMove('swapOrNot', false)}>Dont swap</button>
-              </>);
-            case 7: //spy
-              return (<>
-                <p>Choose whether to swap or not.</p>
-                <button onClick={() => this.sendMove('swapOrNot', true)}>Swap</button>
-                <button onClick={() => this.sendMove('swapOrNot', false)}>Dont swap</button>
-              </>);
-            default:
-              break;
-          }
-        }
-        else {
-          if (user.state.currentTurn) {
-            return (<p>Select a card</p>)
-          }
-          else {
-            return (<p>{currentTurnPlayer.displayName} is selecting a card.</p>);
-          }
-        }
-      }
       else {
-        return (<p>Waiting for all players to respond.</p>)
+        var correctPlayers = game.state.correctPlayers;
+        if (correctPlayers.length > 0) {
+          var correctPlayer = game.players.find(p => p.userId === correctPlayers[0].userId);
+          if (correctPlayer.state.playerOptions) {
+            if (correctPlayer.state.selectedPlayer) {
+              if (correctPlayer.state.claim === 10) { //inquisitor 
+                var selectedPlayer = game.players.find(p => correctPlayer.state.selectedPlayer === p.userId);
+                if (selectedPlayer === user) {
+                  return <p>You have been chosen by the inquisitor. Guess your character by clicking one below.</p>
+                }
+                else {
+                  return <p>{selectedPlayer.displayName} is guessing their character.</p>
+                }
+              }
+            }
+            else {
+              if (user === correctPlayer) {
+                return (<p>Select a player</p>)
+              }
+              else {
+                return (<p>{correctPlayer.displayName} is selecting a player.</p>);
+              }
+            }
+          }
+          else if (correctPlayer.state.selectedCards) {
+            if (correctPlayer.state.selectedCards.every(c => c)) {
+              switch (correctPlayer.state.claim) {
+                case 3: //fool
+                  if (correctPlayer === user) {
+                    return (<>
+                      <p>Choose whether to swap or not.</p>
+                      <button onClick={() => this.sendMove('swapOrNot', true)}>Swap</button>
+                      <button onClick={() => this.sendMove('swapOrNot', false)}>Dont swap</button>
+                    </>);
+                  }
+                  else {
+                    return (<p>{correctPlayer.displayName} is choosing whether to swap or not.</p>);
+                  }
+                case 7: //spy
+                  if (correctPlayer === user) {
+                    if (user.state.revealedCards) {
+                      return (<>
+                        <p>Press ready once you have seen the cards.</p>
+                        <button onClick={() => this.sendMove('accept')}>Ready</button>
+                      </>);
+                    }
+                    else {
+                      return (<>
+                        <p>Choose whether to swap or not.</p>
+                        <button onClick={() => this.sendMove('swapOrNot', true)}>Swap</button>
+                        <button onClick={() => this.sendMove('swapOrNot', false)}>Dont swap</button>
+                      </>);
+                    }
+                  }
+                  else {
+                    return (<p>{correctPlayer.displayName} is choosing whether to swap or not.</p>);
+                  }
+                default:
+                  break;
+              }
+            }
+            else {
+              if (correctPlayer === user) {
+                return (<p>Select a card</p>)
+              }
+              else {
+                return (<p>{correctPlayer.displayName} is selecting a card.</p>);
+              }
+            }
+          }
+        }
+        else if (game.state.incorrectPlayers.length > 0) {
+          return <p>No correct players.</p>
+        }
+        else {
+          return (<p>Waiting for all players to respond.</p>)
+        }
       }
     }
     else if (currentTurnPlayer.state.selectedCards) {
@@ -155,6 +184,17 @@ class Mascarade extends Component {
         else {
           return (<p>{currentTurnPlayer.displayName} is swapping. Waiting for them to select a card</p>);
         }
+      }
+    }
+    else if (currentTurnPlayer.state.revealedCards) {
+      if (user.state.currentTurn) {
+        return (<>
+          <p>Press ready once you have seen your card.</p>
+          <button onClick={() => this.sendMove('accept')}>Ready</button>
+        </>);
+      }
+      else {
+        return (<p>{currentTurnPlayer.displayName} is looking at their card.</p>);
       }
     }
   }
@@ -228,15 +268,16 @@ class Mascarade extends Component {
     var players = game.players;
     var userIndex = players.findIndex(p => p.userId === this.global.user.userId);
     var user = players[userIndex];
-    var currentTurnPlayer = game.players[game.state.currentTurnIndex];
+    var currentPlayer = game.state.correctPlayers.length > 0 ? game.players.find(p => p.userId === game.state.correctPlayers[0].userId)
+      : game.players[game.state.currentTurnIndex];
     players = [...players.slice(userIndex), ...players.slice(0, userIndex)];
     var courtPos = {
       x: 65,
-      y: game.state.cards.length === 0 ? 50 : 35,
+      y: game.state.cards.length > 0 ? 35 : 50,
     };
     var bankPos = {
-      x: game.state.cards.length === 0 ? 35 : 65,
-      y: game.state.cards.length === 0 ? 50 : 65,
+      x: game.state.cards.length > 0 ? 65 : 35,
+      y: game.state.cards.length > 0 ? 65 : 50,
     };
 
     return (
@@ -246,16 +287,16 @@ class Mascarade extends Component {
           <Finish />
         }
         <div id="mascarade-container">
-          <button onClick={() => this.sendMove('reset')}>Reset</button>
-          <div id="table">
+            <div id="table">
             {
               players.map((p, index) => {
                 var pos = this.getPlayerPosition(index);
-                var revealedCard = p.state.revealedCards ?
-                  p.state.revealedCards.find(c => c.userId === p.userId) : null;
+                var revealedCard = user.state.revealedCards ?
+                  user.state.revealedCards.find(c => c.userId === p.userId) : null;
                 var card = revealedCard || p.state.card;
-                var selected = currentTurnPlayer.state.selectedCards &&
-                  currentTurnPlayer.state.selectedCards.some(c => c && c.userId === p.userId);
+
+                var selected = currentPlayer.state.selectedCards &&
+                currentPlayer.state.selectedCards.some(c => c && c.userId === p.userId);
 
                 var cardClick = user.state.selectedCards &&
                   !user.state.selectedCards.every(c => c) &&
@@ -263,6 +304,7 @@ class Mascarade extends Component {
                   () => this.sendMove('selectCard', { userId: p.userId }) : null;
 
                 var playerClick = user.state.playerOptions &&
+                  !user.state.selectedPlayer &&
                   user.state.playerOptions.some(o => o === p.userId) ?
                   () => this.sendMove('selectPlayer', p.userId) : null;
 
@@ -281,18 +323,17 @@ class Mascarade extends Component {
                     click={cardClick}
                     className="card"
                     animated={this.props.animate}
-                    posX={selected ? 50 : pos.x}
-                    posY={selected ? -500 : pos.y}
+                    posX={pos.x}
+                    posY={!card.revealed && selected ? -100 : pos.y}
                     rotateY={card.revealed ? 0 : 180}
                     zIndex={0} />
                 </React.Fragment>
               })
             }
             {
-              game.state.cards &&
               game.state.cards.map((c, index) => {
-                var selected = currentTurnPlayer.state.selectedCards &&
-                  currentTurnPlayer.state.selectedCards.some(c => c && c.index === index);
+                var selected = currentPlayer.state.selectedCards &&
+                currentPlayer.state.selectedCards.some(c => c && c.index === index);
 
                 var click = user.state.selectedCards &&
                   !user.state.selectedCards.every(c => c) &&
@@ -382,15 +423,24 @@ class Mascarade extends Component {
               onClick={() => this.setState({ charactersOpen: true })}></FontAwesomeIcon>
             <div id="characters">
               {
-                game.state.characters.map(c => {
-                  var click = this.state.pickingCharacter ? () => this.sendMove('claim', c) : null;
-                  var character = characters[c];
-                  return <img key={c}
-                    alt={character.name}
-                    title={character.name}
-                    src={character.tokenImage}
-                    onClick={click}
-                    className={`character-token ${click ? 'clickable' : ''}`}></img>
+                characters.map((c, i) => {
+                  if (game.state.characters.indexOf(i) >= 0) {
+                    var click = this.state.pickingCharacter ?
+                      () => { this.sendMove('claim', i); this.setState({ pickingCharacter: false }) } :
+                      currentPlayer.state.claim === 10 && currentPlayer.state.selectedPlayer === user.userId ?
+                        () => { this.sendMove('inquisitorGuess', c); this.setState({ pickingCharacter: false }) } :
+                        null;
+                    return <img key={i}
+                      alt={c.name}
+                      title={c.name}
+                      src={c.tokenImage}
+                      onClick={click}
+                      className={`character-token ${click ? 'clickable' : ''}`}></img>
+                  }
+                  else {
+                    return null;
+                  }
+
                 })
               }
             </div>

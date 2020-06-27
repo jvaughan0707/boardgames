@@ -7,25 +7,37 @@ class Mascarade {
     var addCheckpoint = (animate, pause) => stateChain.push({ game: game.toObject(), animate, pause })
 
     var setNextTurnPlayer = () => {
-      game.state.internal.incorrectPlayers.forEach(player => {
-        if (game.players.indexOf(player) - 1) {
-          player = game.players.find(p => p.userId == player.userId);
-        }
+      game.players[game.state.public.currentTurnIndex].state.public.currentTurn = false;
+      game.state.public.currentTurnIndex++;
+      game.state.public.currentTurnIndex %= game.players.length;
+      var newPlayer = game.players[game.state.public.currentTurnIndex];
+      newPlayer.state.public.currentTurn = true;
+
+      if (newPlayer.state.public.card.revealed ||
+        game.state.public.correctPlayers.find(p => p.userId == newPlayer.userId) ||
+        game.state.public.incorrectPlayers.find(p => p.userId == newPlayer.userId)) {
+        newPlayer.state.public.mustSwap = true;
+      }
+
+      game.state.public.incorrectPlayers.forEach(player => {
+        player = game.players.find(p => p.userId == player.userId);
         moveMoney(1, game.state.public.courtCoins, player)
       });
-      game.state.internal.incorrectPlayers = [];
-      game.state.internal.correctPlayers = [];
+      game.state.public.incorrectPlayers = [];
+      game.state.public.correctPlayers = [];
+
+
       game.players.forEach(p => {
         p.state.private.revealedCards = null;
         p.state.public.card.revealed = false;
         p.state.public.actionTaken = false;
         p.state.public.claim = null;
+        p.state.public.playerOptions = null;
+        p.state.public.selectedPlayer = null;
+        p.state.public.selectedCards = null;
         p.state.public.accept = null;
       });
-      game.players[game.state.public.currentTurnIndex].state.public.currentTurn = false;
-      game.state.public.currentTurnIndex++;
-      game.state.public.currentTurnIndex %= game.players.length;
-      game.players[game.state.public.currentTurnIndex].state.public.currentTurn = true;
+
 
       addCheckpoint(true);
       game.players.forEach(p => {
@@ -94,35 +106,33 @@ class Mascarade {
           return [...getDefaultCharacters(10), 10];
         case 12:
           return [...getDefaultCharacters(11), 11];
-        case 13:
-          return [...getDefaultCharacters(12), 5];
+        // case 13:
+        //   return [...getDefaultCharacters(12), 5];
         default:
           throw 'Invalid player count';
       }
     }
 
     this.getLobbySettings = () =>
-      ({ type: 'mascarade', title: 'Mascarade', minPlayers: 4, maxPlayers: 13 });
+      ({ type: 'mascarade', title: 'Mascarade', minPlayers: 4, maxPlayers: 12 });
 
     this.initializeGame = () => {
       var gameCharacters = _.shuffle(getDefaultCharacters(game.players.length));
       var bankCoins = createCoins(5 + game.players.length * 6);
       game.state = {
-        public: { bankCoins, courtCoins: [], characters: gameCharacters.slice(), started: false, currentTurnIndex: 0 },
-        internal: { correctPlayers: [], incorrectPlayers: [] }
+        public: { bankCoins, courtCoins: [], characters: gameCharacters.slice(), started: false, currentTurnIndex: 0, correctPlayers: [], incorrectPlayers: [] },
+        internal: {}
       };
 
       game.players.forEach((p, i) => {
         var playerCharacter = gameCharacters.pop();
-        p.state.public = { currentTurn: i == 0, coins: [], card: { value: playerCharacter, revealed: true }, mustSwap: i < 4, accept: null, actionTaken: false };
+        p.state.public = { currentTurn: i == 0, coins: [], card: { value: playerCharacter, revealed: true }, mustSwap: i < 4, accept: null, actionTaken: false, claim: null };
         p.state.private = { revealedCards: null };
         p.state.internal = { card: { value: playerCharacter } }
       });
 
-      if (gameCharacters.length > 0) {
-        game.state.public.cards = gameCharacters.map(c => ({ value: c, revealed: true }));
-        game.state.internal.cards = gameCharacters.map(c => ({ value: c }));
-      }
+      game.state.public.cards = gameCharacters.map(c => ({ value: c, revealed: true }));
+      game.state.internal.cards = gameCharacters.map(c => ({ value: c }));
     }
 
     this.onPlayerQuit = (userId) => {
@@ -138,24 +148,40 @@ class Mascarade {
               p.state.public.card.value = p.state.internal.card.value;
               p.state.public.card.revealed = true;
             });
-            game.state.internal.incorrectPlayers = remaining.filter(p => p.state.internal.card.value !== p.state.public.claim);
-            game.state.internal.correctPlayers = remaining.filter(p => p.state.internal.card.value === p.state.public.claim);
+            game.state.public.incorrectPlayers = remaining.filter(p => p.state.internal.card.value !== p.state.public.claim).map(p => ({ userId: p.userId, displayName: p.displayName }));
+            var correctPlayers = remaining.filter(p => p.state.internal.card.value === p.state.public.claim);
+            game.state.public.correctPlayers = correctPlayers.map(p => ({ userId: p.userId, displayName: p.displayName }));
             addCheckpoint(true, 2000);
+            remaining.forEach(p => {
+              p.state.public.card.revealed = false;
+            });
 
-            if (game.state.internal.correctPlayers.length == 0) {
+            addCheckpoint(true);
+
+            remaining.forEach(p => {
+              p.state.public.card.value = null;
+            });
+
+            addCheckpoint(false, 1000);
+
+            if (game.state.public.correctPlayers.length == 0) {
               setNextTurnPlayer();
             }
           }
           else {
-            game.state.internal.correctPlayers = remaining;
+            var correctPlayers = remaining;
           }
-          game.state.internal.correctPlayers.forEach(player => {
+
+          var resolved = false;
+
+          game.state.public.correctPlayers = correctPlayers.map(p => ({ userId: p.userId, displayName: p.displayName }));
+          correctPlayers.forEach(player => {
             let others = game.players.filter(p => p !== player);
             switch (player.state.public.claim) {
               case 0: //judge
                 moveMoney(Infinity, player, game.state.public.courtCoins)
                 addCheckpoint(true);
-                setNextTurnPlayer();
+                resolved = true;
                 break;
               case 1: //bishop
                 var maxMoney = Math.max(...others.map(p => p.state.public.coins.length));
@@ -166,23 +192,22 @@ class Mascarade {
                 else {
                   moveMoney(2, player, richestPlayers[0]);
                   addCheckpoint(true);
-                  setNextTurnPlayer();
+                  resolved = true;
                 }
                 break;
               case 2: // king
                 takeBankMoney(3, player);
                 addCheckpoint(true);
-                setNextTurnPlayer();
+                resolved = true;
                 break;
               case 3: //fool
                 takeBankMoney(1, player);
                 // choose 2 cards
-                currentPlayer.state.public.selectedCards = [null, null];
+                player.state.public.selectedCards = [null, null];
                 break;
               case 4: //queen
                 takeBankMoney(2, player);
-                addCheckpoint(true);
-                setNextTurnPlayer();
+                resolved = true;
                 break;
               case 5: //thief
                 var next = (player.__index + 1) % game.players.length;
@@ -190,24 +215,26 @@ class Mascarade {
                 moveMoney(1, player, game.players[next]);
                 moveMoney(1, player, game.players[prev]);
                 addCheckpoint(true);
-                setNextTurnPlayer();
+                resolved = true;
                 break;
               case 6: //witch
                 player.state.public.playerOptions = others.map(p => p.userId);
                 break;
               case 7: //spy
-                currentPlayer.state.public.selectedCards = [currentPlayer.userId, null];
+                player.state.public.selectedCards = [{ userId: player.userId }, null];
+                player.state.private.revealedCards = [{ userId: player.userId, value: player.state.internal.card.value, revealed: true }];
+                addCheckpoint(true);
                 // choose 1 card
                 break;
               case 8: //peasant
-                if (correct.length > 1) {
+                if (correctPlayers.length > 1) {
                   takeBankMoney(2, player)
                 }
                 else {
                   takeBankMoney(1, player);
                 }
                 addCheckpoint(true);
-                setNextTurnPlayer();
+                resolved = true;
                 break;
               case 9: //cheat
                 if (player.state.public.coins.length >= 10) {
@@ -225,31 +252,35 @@ class Mascarade {
                   takeBankMoney(amount, player);
                 }
                 addCheckpoint(true);
-                setNextTurnPlayer();
+                resolved = true;
                 break;
               default:
                 throw { name: "ActionError", message: 'Invalid character' };
             }
           });
           addCheckpoint(false);
+
+          if (resolved) {
+            setNextTurnPlayer();
+          }
         }
       }
 
       var resolveEffect = () => {
-        game.state.internal.correctPlayers.forEach(player => {
-          if (game.players.indexOf(player) - 1) {
-            player = game.players.find(p => p.userId == player.userId);
-          }
+        game.state.public.correctPlayers.forEach(player => {
+          player = game.players.find(p => p.userId == player.userId);
 
           switch (player.state.public.claim) {
             case 1: //bishop
-              var selectedPlayer = game.players.find(p => p.userId == currentPlayer.state.selectedPlayer)
+              var selectedPlayer = game.players.find(p => p.userId == currentPlayer.state.public.selectedPlayer)
               moveMoney(2, player, selectedPlayer);
               addCheckpoint(true);
               setNextTurnPlayer();
               break;
+            case 3: // fool
+              break;
             case 6: //witch
-              var selectedPlayer = game.players.find(p => p.userId == currentPlayer.state.selectedPlayer)
+              var selectedPlayer = game.players.find(p => p.userId == currentPlayer.state.public.selectedPlayer)
               var diff = (selectedPlayer.state.public.coins.length - player.state.public.coins.length);
               if (diff > 0) {
                 moveMoney(diff, player, selectedPlayer);
@@ -264,6 +295,7 @@ class Mascarade {
               player.state.private.revealedCards = player.state.public.selectedCards.map(c =>
                 c.userId ? ({ userId: c.userId, value: game.players.find(p => p.userId == c.userId).state.internal.card.value, revealed: true })
                   : ({ index: c.index, value: game.state.internal.cards[c.index].value, revealed: true }));
+              stateChain.pop();
               addCheckpoint(true);
               break;
             case 10: //inquisitor
@@ -280,13 +312,17 @@ class Mascarade {
           this.initializeGame();
           addCheckpoint(true);
           break;
+        case "acceptAll":
+          game.players.forEach(p => p.state.public.claim != null || p.state.public.accept || this.validateAction(p, 'accept'))
+          addCheckpoint(false);
+          break;
+        case "challengeAll":
+          game.players.forEach(p => p.state.public.claim != null || p.state.public.accept || this.validateAction(p, 'challenge'))
+          addCheckpoint(false);
+          break;
         case "accept":
           if (currentPlayer.state.public.accept) {
             throw { name: "ActionError", message: 'You have already accepted' };
-          }
-
-          if (currentPlayer.state.public.claim !== null) {
-            throw { name: "ActionError", message: 'You have already challenged' };
           }
 
           if (!game.state.public.started) {
@@ -329,6 +365,11 @@ class Mascarade {
             if (claimedCharacter === null) {
               throw { name: "ActionError", message: 'There is nothing to accept at this time' };
             }
+
+            if (currentPlayer.state.public.claim !== null) {
+              throw { name: "ActionError", message: 'You have already challenged' };
+            }
+
             currentPlayer.state.public.accept = true;
 
             checkClaimResponses();
@@ -345,7 +386,7 @@ class Mascarade {
             throw { name: "ActionError", message: 'There is no active claim so you cannot challenge now' };
           }
           else if (currentPlayer.state.public.claim != null) {
-            throw { name: "ActionError", message: 'You have already claimed' };
+            throw { name: "ActionError", message: 'You have already challenged' };
           }
           else {
             currentPlayer.state.public.claim = claimedCharacter;
@@ -498,7 +539,30 @@ class Mascarade {
             setNextTurnPlayer();
           }
           addCheckpoint(false);
-          break
+          break;
+        case "inquisitorGuess":
+          if (game.players[game.state.public.currentTurnIndex].state.public.claim == 10) {
+            var correctPlayer = game.players.find(p => p.userId == game.state.public.correctPlayers[0].userId);
+            if (correctPlayer.state.public.selectedPlayer == currentPlayer.userId) {
+              currentPlayer.state.public.card = { value: currentPlayer.state.internal.card.value, revealed: true }
+              addCheckpoint(true);
+
+              if (currentPlayer.state.internal.card.value != data) {
+                moveMoney(4, correctPlayer, currentPlayer);
+                addCheckpoint(true);
+              }
+
+              setNextTurnPlayer();
+            }
+            else {
+              throw { name: "ActionError", message: 'This action is not currently available' };
+            }
+          }
+          else {
+            throw { name: "ActionError", message: 'This action is not currently available' };
+          }
+
+          break;
         default:
           throw 'Invalid action';
       }
