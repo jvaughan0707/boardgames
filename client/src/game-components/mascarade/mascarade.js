@@ -369,12 +369,12 @@ class Mascarade extends Component {
                       top: this.getPlayerPosition(i).y + '%',
                       transform: 'translate(20%, -50%)',
                       zIndex: ci,
-                      transitionDelay: (p.state.coins.length - ci) * 100 + 'ms'
+                      transition: `top 1s ${ci * 200}ms, left 1s ${ci * 200}ms, transform 1s ${ci * 200}ms, z-index 0s ${500 + ci * 200}ms`
                     }}></img>)
                 ),
                 game.state.bankCoins.map((c, i) => <img key={c.key} alt="coin" className="coin" src={images('./coin.png')}
                   style={{
-                    left: bankPos.x + 2 * Math.cos((i % 5) * 2 * Math.PI / 5) + '%',
+                    left: bankPos.x - 2 * Math.cos((i % 5) * 2 * Math.PI / 5) + '%',
                     top: bankPos.y + 2 * Math.sin((i % 5) * 2 * Math.PI / 5) + '%',
                     transform: 'translate(-50%, -50%)',
                     zIndex: i
@@ -385,7 +385,7 @@ class Mascarade extends Component {
                     top: courtPos.y + '%',
                     transform: 'translate(-70%, -50%)',
                     zIndex: i,
-                    transitionDelay: (game.state.courtCoins.length - i) * 100 + 'ms'
+                    transition: `top 1s,left 1s, transform 1s, z-index 0s 500ms`
                   }}></img>)
               ].flat().sort((a, b) => a.key - b.key)
             }

@@ -146,6 +146,7 @@ class Mascarade {
     this.onPlayerQuit = (userId) => {
       game.finished = true;
       game.players.find(p => p.userId == userId).active = false;
+      addCheckpoint(false);
       return stateChain;
     }
 
@@ -322,19 +323,7 @@ class Mascarade {
       }
 
       switch (action) {
-        case "reset":
-          this.initializeGame();
-          addCheckpoint(true);
-          break;
-        case "acceptAll":
-          game.players.forEach(p => p.state.public.claim != null || p.state.public.accept || this.validateAction(p, 'accept'))
-          addCheckpoint(false);
-          break;
-        case "challengeAll":
-          game.players.forEach(p => p.state.public.claim != null || p.state.public.accept || this.validateAction(p, 'challenge'))
-          addCheckpoint(false);
-          break;
-        case "accept":
+       case "accept":
           if (currentPlayer.state.public.accept) {
             throw { name: "ActionError", message: 'You have already accepted' };
           }
@@ -343,8 +332,13 @@ class Mascarade {
             currentPlayer.state.public.accept = true;
 
             if (game.players.every(p => p.state.public.accept)) {
+              for (let i = 0; i < 6; i++) {
+                game.players.forEach(p => {
+                  moveMoney(1, p.state.public.coins, game.state.public.bankCoins);
+                });
+              }
+
               game.players.forEach(p => {
-                moveMoney(6, p.state.public.coins, game.state.public.bankCoins);
                 p.state.public.card.revealed = false;
               });
 
