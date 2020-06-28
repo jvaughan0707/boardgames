@@ -15,13 +15,13 @@ export default function Finish() {
     ws.emit('rematch', game.gameId, user.displayName);
   }
 
-  var outcomeText = '';
+  var winnersText = game.state.winners.length > 1 ? 'Winners: ' : 'Winner: '+
+   game.state.winners.map(p => p.displayName).join(', ');
 
   return (
     <Overlay width={300} height={150} zIndex={98} fade={true}>
-
       <h2>Game Over</h2>
-      <p>{outcomeText}</p>
+      <p>{winnersText}</p>
       <div className="buttons">
         <button onClick={rematch}>Rematch</button>
         <button onClick={quit}>Home</button>

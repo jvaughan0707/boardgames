@@ -57,6 +57,8 @@ class GameService {
           return new Skull(game);
         case 'spyfall':
           return new Spyfall(game);
+        case 'mascarade':
+          return new Mascarade(game);
         default:
           throw 'Invalid type';
       }

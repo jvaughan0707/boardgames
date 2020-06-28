@@ -287,7 +287,13 @@ class Mascarade extends Component {
           <Finish />
         }
         <div id="mascarade-container">
-            <div id="table">
+          <div style={{ position: 'absolute', left: '30%', top: '30%', zIndex: 90 }}>
+            <button onClick={() => this.sendMove('reset')}>Reset</button>
+            <button onClick={() => this.sendMove('acceptAll')}>Accept All</button>
+            <button onClick={() => this.sendMove('challengeAll')}>Challenge All</button>
+          </div>
+
+          <div id="table">
             {
               players.map((p, index) => {
                 var pos = this.getPlayerPosition(index);
@@ -426,7 +432,12 @@ class Mascarade extends Component {
                 characters.map((c, i) => {
                   if (game.state.characters.indexOf(i) >= 0) {
                     var click = this.state.pickingCharacter ?
-                      () => { this.sendMove('claim', i); this.setState({ pickingCharacter: false }) } :
+                      () => { 
+                        user.state.actionTaken = true;
+                        user.state.claim = i;
+                        this.sendMove('claim', i); 
+                        this.setState({ pickingCharacter: false }) 
+                      } :
                       currentPlayer.state.claim === 10 && currentPlayer.state.selectedPlayer === user.userId ?
                         () => { this.sendMove('inquisitorGuess', c); this.setState({ pickingCharacter: false }) } :
                         null;

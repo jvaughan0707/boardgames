@@ -69,10 +69,18 @@ class Mascarade {
       }
 
       if (game.state.public.started) {
-        game.players.forEach(p => {
-          var money = p.state.public.coins.length;
-          if (money <= 0 || money >= 13) {
+        game.players.forEach(player => {
+          var money = player.state.public.coins.length;
+          if (money <= 0) {
             game.finished = true;
+            var maxMoney = Math.max(...game.players.map(p => p.state.public.coins.length));
+            game.state.public.winners = game.players
+              .filter(p => p.state.public.coins.length === maxMoney)
+              .map(p => ({ userId: p.userId, displayName: p.displayName }));
+          }
+          if (money >= 13) {
+            game.finished = true;
+            game.state.public.winners.push({ userId: player.userId, displayName: player.displayName })
           }
         });
       }
@@ -120,7 +128,7 @@ class Mascarade {
       var gameCharacters = _.shuffle(getDefaultCharacters(game.players.length));
       var bankCoins = createCoins(5 + game.players.length * 6);
       game.state = {
-        public: { bankCoins, courtCoins: [], characters: gameCharacters.slice(), started: false, currentTurnIndex: 0, correctPlayers: [], incorrectPlayers: [] },
+        public: { bankCoins, courtCoins: [], characters: gameCharacters.slice(), started: false, currentTurnIndex: 0, correctPlayers: [], incorrectPlayers: [], winners: [] },
         internal: {}
       };
 
@@ -239,7 +247,10 @@ class Mascarade {
               case 9: //cheat
                 if (player.state.public.coins.length >= 10) {
                   game.finished = true;
-                  game.state.public.winner = player;
+                  game.state.public.winners.push({ userId: player.userId, displayName: player.displayName })
+                }
+                else {
+                  resolved = true;
                 }
                 break;
               case 10: //inquisitor
@@ -295,6 +306,7 @@ class Mascarade {
               player.state.private.revealedCards = player.state.public.selectedCards.map(c =>
                 c.userId ? ({ userId: c.userId, value: game.players.find(p => p.userId == c.userId).state.internal.card.value, revealed: true })
                   : ({ index: c.index, value: game.state.internal.cards[c.index].value, revealed: true }));
+              //select and reveal at the same time
               stateChain.pop();
               addCheckpoint(true);
               break;

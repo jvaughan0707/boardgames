@@ -7,6 +7,7 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import Overlay from '../overlay/overlay';
 import SkullRules from '../../game-components/skull/rules/rules';
 import SpyfallRules from '../../game-components/spyfall/rules/rules';
+import MascaradeRules from '../../game-components/mascarade/rules/rules';
 import { faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faUserSecret, faCheck, faVolumeMute, faVolumeUp, faPlus, faMinus, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 import Cookies from 'universal-cookie';
 import knock from '../../resources/door-knock.ogg'
@@ -38,6 +39,8 @@ class App extends Component {
         return <SkullRules />
       case 'spyfall':
         return <SpyfallRules />
+        case 'mascarade':
+        return <MascaradeRules />
       default:
         return null;
     }

@@ -7,7 +7,7 @@ const mascaradeImg = require('../../resources/mascarade/title.jpg');
 const games = [
   { type: "skull", title: "Skull", img: skullImg }, 
   { type: "spyfall", title: "Spyfall", img: spyfallImg },
-  { type: "mascarade", title: "Mascarade", img: mascaradeImg, disabled: true },
+  { type: "mascarade", title: "Mascarade", img: mascaradeImg },
 ]
 
 class Create extends Component {
