@@ -287,12 +287,6 @@ class Mascarade extends Component {
           <Finish />
         }
         <div id="mascarade-container">
-          <div style={{ position: 'absolute', left: '30%', top: '30%', zIndex: 90 }}>
-            <button onClick={() => this.sendMove('reset')}>Reset</button>
-            <button onClick={() => this.sendMove('acceptAll')}>Accept All</button>
-            <button onClick={() => this.sendMove('challengeAll')}>Challenge All</button>
-          </div>
-
           <div id="table">
             {
               players.map((p, index) => {
@@ -302,7 +296,7 @@ class Mascarade extends Component {
                 var card = revealedCard || p.state.card;
 
                 var selected = currentPlayer.state.selectedCards &&
-                currentPlayer.state.selectedCards.some(c => c && c.userId === p.userId);
+                  currentPlayer.state.selectedCards.some(c => c && c.userId === p.userId);
 
                 var cardClick = user.state.selectedCards &&
                   !user.state.selectedCards.every(c => c) &&
@@ -339,7 +333,7 @@ class Mascarade extends Component {
             {
               game.state.cards.map((c, index) => {
                 var selected = currentPlayer.state.selectedCards &&
-                currentPlayer.state.selectedCards.some(c => c && c.index === index);
+                  currentPlayer.state.selectedCards.some(c => c && c.index === index);
 
                 var click = user.state.selectedCards &&
                   !user.state.selectedCards.every(c => c) &&
@@ -432,11 +426,11 @@ class Mascarade extends Component {
                 characters.map((c, i) => {
                   if (game.state.characters.indexOf(i) >= 0) {
                     var click = this.state.pickingCharacter ?
-                      () => { 
+                      () => {
                         user.state.actionTaken = true;
                         user.state.claim = i;
-                        this.sendMove('claim', i); 
-                        this.setState({ pickingCharacter: false }) 
+                        this.sendMove('claim', i);
+                        this.setState({ pickingCharacter: false })
                       } :
                       currentPlayer.state.claim === 10 && currentPlayer.state.selectedPlayer === user.userId ?
                         () => { this.sendMove('inquisitorGuess', c); this.setState({ pickingCharacter: false }) } :
