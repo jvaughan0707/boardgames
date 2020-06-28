@@ -144,6 +144,8 @@ class Mascarade {
     }
 
     this.onPlayerQuit = (userId) => {
+      game.finished = true;
+      game.players.find(p => p.userId == userId).active = false;
       return stateChain;
     }
 

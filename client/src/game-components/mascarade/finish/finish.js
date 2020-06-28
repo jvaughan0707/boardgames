@@ -15,8 +15,9 @@ export default function Finish() {
     ws.emit('rematch', game.gameId, user.displayName);
   }
 
-  var winnersText = game.state.winners.length > 1 ? 'Winners: ' : 'Winner: '+
-   game.state.winners.map(p => p.displayName).join(', ');
+  var winnersText = game.state.winners.length > 0 ? ((game.state.winners.length > 1 ? 'Winners: ' : 'Winner: ')+
+   game.state.winners.map(p => p.displayName).join(', ')) :
+   'Game ended due to player leaving early';
 
   return (
     <Overlay width={300} height={150} zIndex={98} fade={true}>
