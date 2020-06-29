@@ -77,10 +77,18 @@ class Mascarade {
             game.state.public.winners = game.players
               .filter(p => p.state.public.coins.length === maxMoney)
               .map(p => ({ userId: p.userId, displayName: p.displayName }));
+            game.players.forEach(p => {
+              p.state.public.card.value = p.state.internal.card.value;
+              p.state.public.card.revealed = true;
+            });
           }
           if (money >= 13) {
             game.finished = true;
             game.state.public.winners.push({ userId: player.userId, displayName: player.displayName })
+            game.players.forEach(p => {
+              p.state.public.card.value = p.state.internal.card.value;
+              p.state.public.card.revealed = true;
+            });
           }
         });
       }
@@ -146,6 +154,10 @@ class Mascarade {
     this.onPlayerQuit = (userId) => {
       game.finished = true;
       game.players.find(p => p.userId == userId).active = false;
+      game.players.forEach(p => {
+        p.state.public.card.value = p.state.internal.card.value;
+        p.state.public.card.revealed = true;
+      });
       addCheckpoint(false);
       return stateChain;
     }
@@ -250,7 +262,11 @@ class Mascarade {
               case 9: //cheat
                 if (player.state.public.coins.length >= 10) {
                   game.finished = true;
-                  game.state.public.winners.push({ userId: player.userId, displayName: player.displayName })
+                  game.state.public.winners.push({ userId: player.userId, displayName: player.displayName });
+                  game.players.forEach(p => {
+                    p.state.public.card.value = p.state.internal.card.value;
+                    p.state.public.card.revealed = true;
+                  });
                 }
                 else {
                   resolved = true;
