@@ -4,19 +4,22 @@
   flex-wrap: wrap;
 
   #locations {
+    background-color: rgb(64, 64, 64);
+    border-radius: 7px;
     margin-left: 65px;
     min-width: 625px;
     display: grid;
-    grid-template-columns: repeat(auto-fill, 125px);
-    grid-template-rows: repeat(auto-fill, 85px);
+    grid-template-columns: repeat(auto-fill, 129px);
+    grid-template-rows: repeat(auto-fill, 89px);
     float: left;
   }
 
   .location {
     box-sizing: border-box;
+    border: 2px solid;
     border-radius: 7px;
-    width: 125px;
-    height: 85px;
+    width: 129px;
+    height: 89px;
     position: relative;
     font-size: 40px;
     line-height: 85px;

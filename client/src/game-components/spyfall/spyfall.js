@@ -121,7 +121,7 @@ class Spyfall extends Component {
                 }
 
                 return (
-                  <div key={id} style={{ background: `url(${locationsImg}) 0 ${(1 - id)*170}px/100%` }}
+                  <div key={id} style={{ background: `url(${locationsImg}) 0 ${(1 - id)*85}px/100%` }}
                     alt={locations[id]} className={className}
                     onClick={spy ? () => this.setState({ selectedLocationId: id }) : null}>
                     {
