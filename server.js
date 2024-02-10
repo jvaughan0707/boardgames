@@ -21,3 +21,7 @@ var http = require( "http" ).createServer( app );
 require('./server/socket')(http);
 
 http.listen(port, () => console.log("Listening on port " + port));
+
+const job = require('./server/cron');
+
+job.start();
