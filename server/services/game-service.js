@@ -87,7 +87,7 @@ class GameService {
         });
     }
 
-    var quit = game => {
+    var quit = async game => {
       io.to(userId).emit('gameEnded');
       var player = game.players.find(p => p.userId == userId);
 
@@ -107,11 +107,11 @@ class GameService {
             return saveAndEmit(game, stateChain);
           }
           else {
-            return game.save();
+            return await game.save();
           }
         }
         else {
-          return game.deleteOne();
+          return await game.deleteOne();
         }
       }
     }

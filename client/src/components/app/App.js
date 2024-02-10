@@ -68,7 +68,16 @@ class App extends Component {
     webSocket.on('knock', () => {
       if (!this.global.mute && !this.global.game && !this.state.knocking) {
         this.setState({knocking: true});
-        new Audio(knock).play();
+        
+        var promise = new Audio(knock).play();
+        if (promise !== undefined) {
+          promise.then(_ => {
+            // Autoplay started!
+          }).catch(error => {
+            // Autoplay was prevented.
+            // Show a "Play" button so that user can start playback.
+          });
+        }
         setTimeout(() => this.setState({ knocking: false }), 1500);
       }
     });
