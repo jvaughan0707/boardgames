@@ -12,7 +12,7 @@ import { faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTime
 import Cookies from 'universal-cookie';
 import knock from '../../resources/door-knock.ogg'
 import Loading from '../loading/loading';
-import io from 'socket.io-client';
+import io  from "socket.io-client";
 
 library.add(faUser, faArrowRight, faUnlink, faCog, faQuestion, faSignOutAlt, faTimes, faPlus, faMinus, faUserSecret, faCheck, faVolumeMute, faVolumeUp, faExternalLinkAlt)
 const cookies = new Cookies();
