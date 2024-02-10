@@ -111,7 +111,7 @@ class GameService {
           }
         }
         else {
-          return game.remove();
+          return game.deleteOne();
         }
       }
     }
@@ -280,7 +280,7 @@ class GameService {
               game.players.forEach(player => {
                 io.to(player.userId).emit('gameStarted', maskGameObject(game.toObject(), player.userId));
               });
-              return lobby.remove()
+              return lobby.deleteOne()
             });
         })
         .catch(err => console.error(new Date(), err, { lobbyId, userId }));
