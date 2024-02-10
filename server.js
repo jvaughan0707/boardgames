@@ -22,6 +22,8 @@ require('./server/socket')(http);
 
 http.listen(port, () => console.log("Listening on port " + port));
 
-const job = require('./server/cron');
+if (process.env.NODE_ENV = 'production') {
+  const job = require('./server/cron');
 
-job.start();
+  job.start();
+}
